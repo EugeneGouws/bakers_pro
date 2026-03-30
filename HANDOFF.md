@@ -1,51 +1,87 @@
 # HANDOFF.md
 
-**Last updated:** 2026-03-30 · branch: `main`
+**Last updated:** 2026-03-30 (afternoon) · branch: `main`
 
 ## What was accomplished this session
 
-- Migrated data model to GitHub hybrid: community data in GitHub repo, personal data in localStorage only
-- Created `data/ingredients.json` (57 ingredients) and `data/recipes.json` (14 recipes) as community source of truth
-- Added `src/lib/github.js` — `fetchGitHubJson` + `commitGitHubJson` (via Netlify proxy)
-- Added `src/lib/storage.js` — favourites, collections, preferences helpers
-- Added `netlify/functions/github-commit.js` — server-side GitHub Contents API proxy; `VITE_GITHUB_TOKEN` stays in Netlify env, never in client bundle
-- GitHub sync on app mount via `useEffect` — merges community ingredient prices (local wins if newer) and appends new community recipes; sync status badge in header
-- "Share with community" toggle on Scanner tab (default off); shared recipes committed to `data/recipes.json` via GitHub API
-- After Apify/Checkers price run: auto-commits updated `data/ingredients.json` to GitHub (non-blocking)
-- Favourites (★ star toggle) per recipe in Recipe Book — stored in `bakerspro_favourites`
-- Named collections (+ button with dropdown + new collection input) in Recipe Book — stored in `bakerspro_collections`; My Collections summary section below recipe list
-- Updated `CLAUDE.md`, `README.md`, `.env`, `.env.example`
+**Price update UX overhaul:**
+- Apify actor call: reduced from 10 → 5 items per search (focused candidate list)
+- All 5 candidates now always shown in modal for user disambiguation (removed silent auto-accept logic)
+- Per-ingredient GitHub commit on price selection (moved from post-loop batch commit)
+- Enhanced skip button: "Skip — none of these are appropriate"
+- Manual "Push to GitHub" button in DB tab for offline edits
+
+**Packaging cost control:**
+- Added state: `packagingEnabled` (boolean, default true), `packagingCost` (number, default 16)
+- Updated `calcOverhead()` to accept optional `pkgCost` parameter (was hardcoded R16)
+- Costing tab UI: inline packaging checkbox toggle + editable R amount field
+- Sell-price cards (2×, 2.5×, 3×) recalculate live as packaging amount changes
+
+**Recipe Book starred filter:**
+- Added state: `bookShowStarred` (boolean filter toggle)
+- New "☆ All / ★ Starred" pill button in Recipe Book header
+- Filters recipe list to starred recipes only when active
+- Button only appears when user has favorite recipes
+
+**Data sync fix:**
+- Updated bundled `INGREDIENTS_DB` in code to match `data/ingredients.json`
+- All 57 ingredients now use standardized units (g/ml/each only)
+- All ingredients: `dateLastUpdated: "2024-01-01"`, `needsCosting: true`
+- Ensures first app load shows correct data without requiring localStorage reset
+
+**Documentation:**
+- Updated CLAUDE.md: added new state variables, updated function signatures, added session log
+- Updated README.md: clarified unit types, packaging features, Apify flow, filter feature
 
 ## Current state
 
 | Layer | Status | Notes |
 |---|---|---|
-| Scanner (URL import) | ✅ stable but limited | Netlify function + JSON-LD + HTML fallback |
+| Scanner (URL import) | ✅ stable | Netlify function + JSON-LD + HTML fallback |
 | Scanner (file import) | ✅ stable | .txt .md .docx .pdf .xlsx |
-| Ingredients DB | ✅ stable | inline price editing, bulk Apify/Checkers update, status badges |
-| Costing tab | ✅ stable | overhead formula, sell-price suggestions, edit mode |
-| Recipe Book | ✅ stable | contents list, live cost, ★ favourites, collections, delete |
-| GitHub community sync | ✅ stable | mount fetch + post-Apify commit + recipe share |
+| Ingredients DB | ✅ stable | inline price editing, bulk Apify/Checkers update (5 items, all shown) |
+| Costing tab | ✅ stable | overhead formula, optional packaging cost, sell-price suggestions, edit mode |
+| Recipe Book | ✅ stable | contents list, live cost, ★ favourites, starred filter, collections |
+| GitHub community sync | ✅ stable | mount fetch + per-selection commit + recipe share |
+| Price review modal | ⚠️ UX issue | Candidate rows visibility — background contrast insufficient |
 | Tests | ❌ not started | no test framework configured |
 
 ## Known bugs
 
-None currently recorded.
+1. **Modal candidate row visibility** (Priority: HIGH)
+   - Non-top candidates still difficult to read despite background color change
+   - Root cause: `var(--color-background-secondary)` lacks sufficient contrast
+   - Fix: use `var(--color-background-primary)` or opaque white for better readability
+   - Location: `src/BakersCostPro.jsx` line 1931
+
+2. **GitHub commit 502 error on localhost** (Expected)
+   - Netlify functions don't run in dev mode (`npm run dev`)
+   - Status: Test on production deployment to confirm it works
+   - Workaround: use manual "Push to GitHub" button in DB tab for local testing
 
 ## Backlog
 
 - **Recipe Book: search/filter** — filter list by title as the collection grows
 - **Recipe Book: duplicate detection** — warn on import if a recipe with the same title already exists
-- **Packaging & markup as separate add-ons** — allow per-recipe packaging cost and markup % on top of overhead
 - **Contributor identity** — currently hardcoded `"anonymous"`; could allow user to set a display name in preferences
+- **Live Prices tab** — placeholder only; marked for removal (design decision pending)
+- **Recipe import 404s** — intermittent issue on certain recipe URLs; needs investigation
 
 ## Next session plan
 
-1. **fix ingredients DB to reflect only ml/l g/kg and each in the unit fields, to make the package editable for manual updates.
-2. **files in data/ need to keep track of date last updated, otherwise it always looks like it was updated today.
-3. **remove live price tab. no need for it anymore.
-4. **Still 404 on recipe imports.
+1. **Fix modal candidate row visibility** (modal background: try `primary` or `#ffffff`)
+   - Test on local dev with `npm run dev`
+   - Verify all 5 rows now clearly readable
 
+2. **Test on production deployment** to verify:
+   - GitHub commits work (502 error won't happen on Netlify)
+   - Packaging controls persist correctly
+   - Recipe Book filter works end-to-end
+
+3. **Post-deployment QA**:
+   - Clear browser cache, verify fresh ingredient load
+   - Test price update flow: select 1-2 items → modal appears → all 5 visible → select one → GitHub commit
+   - Test Recipe Book filter: star 2-3 recipes → toggle filter → verify list updates
 
 ## Architecture reminder
 

@@ -39,19 +39,19 @@ No test framework is configured.
 
 **Core utilities**
 - `matchIngredientEff(name, unit, db)` — 3-step fuzzy matcher against mutable `dbState` (exact alias → partial alias → substring)
-- `calcOverhead(ingredientTotal)` — 5% operating + 5% equipment + 5% supplies + R16 packaging = ×1.15 + R16
+- `calcOverhead(ingredientTotal, pkgCost = 16)` — 5% operating + 5% equipment + 5% supplies + packaging cost (default R16)
 - `initDb()` — loads DB from localStorage or seeds from `INGREDIENTS_DB`
 - `initRecipes()` — loads recipes from localStorage; seeds from `src/data/recipes.json` if empty
 - `Badge` — tiny inline component for status chips
 
 **State (all in a single component)**
-`tab` ("scan"|"db"|"cost"|"book"|"prices"), `dbState` (mutable ingredient DB), `recipes` (array), `activeRecipeId`, `editingRecipe` (working copy while editing), `editingCell` (inline DB price edit), `importMode`, `urlInput`, `importing`, `err`, `shareOnImport` (community share toggle), `syncStatus` (null|"syncing"|"synced"|"offline"), `favourites` (string[]), `collections` ({ [name]: string[] }), `collectionMenu` (open recipe id)
+`tab` ("scan"|"db"|"cost"|"book"|"prices"), `dbState` (mutable ingredient DB), `recipes` (array), `activeRecipeId`, `editingRecipe` (working copy while editing), `editingCell` (inline DB price edit), `importMode`, `urlInput`, `importing`, `err`, `shareOnImport` (community share toggle), `syncStatus` (null|"syncing"|"synced"|"offline"), `favourites` (string[]), `collections` ({ [name]: string[] }), `collectionMenu` (open recipe id), `packagingEnabled` (bool, costing), `packagingCost` (number, costing), `bookShowStarred` (bool, recipe book filter)
 
 **Five tabs**
 1. **Scanner** — URL import (Netlify function + JSON-LD/HTML fallback) or file upload (.txt .md .docx .pdf .xlsx); "Share with community" toggle (default off)
 2. **Ingredients DB** — searchable table; click any R/unit value to edit inline; Status/Last Updated columns; bulk Apify/Checkers price update
-3. **Costing** — pill selector for recipe history; per-ingredient breakdown + overhead totals + sell-price suggestions; Edit button opens inline edit mode (title + quantities)
-4. **Recipe Book** — numbered list with live cost price; ★ favourite toggle; + collection button with dropdown; My Collections summary section; click to open in Costing; ✕ to delete
+3. **Costing** — pill selector for recipe history; per-ingredient breakdown + overhead totals + sell-price suggestions; packaging cost optional (checkbox toggle + editable R amount); Edit button opens inline edit mode (title + quantities)
+4. **Recipe Book** — numbered list with live cost price; ★ favourite toggle; filter toggle (show all / starred only); + collection button with dropdown; My Collections summary section; click to open in Costing; ✕ to delete
 5. **Live Prices** — Coming Soon placeholder
 
 **GitHub sync (on mount)**
@@ -63,7 +63,7 @@ No test framework is configured.
 - `finishImport(parsed)` — auto-adds unmatched ingredients to DB with `needsCosting: true`; skips `FREE_INGREDIENTS`; saves recipe to localStorage; if `shareOnImport` is true, fetches + appends + commits `data/recipes.json` to GitHub
 
 **Price update → GitHub commit**
-After a successful Apify/Checkers bulk price run, `data/ingredients.json` is committed to GitHub via `commitGitHubJson` (non-blocking, errors logged to console only). Commit message: `"Price update: [names] via Checkers"`.
+Price selection in review modal commits immediately to GitHub per-ingredient (commit message: `"Price update: [ingredient] via Checkers"`). Apify now fetches 5 candidates (was 10); all results shown in modal for user disambiguation (no silent auto-accept). Manual "Push to GitHub" button in DB tab for offline edits.
 
 **localStorage keys**
 - `bakerspro_db` — full ingredient DB with personal price overrides and `dateLastUpdated`
@@ -93,4 +93,5 @@ Structured to ease a future React Native / Expo iOS port: `fetch` only (no brows
 
 ## Session log
 
-- 2026-03-30: Session clean — no mistakes. Migrated data model to GitHub hybrid (community data) + localStorage (personal). Added favourites, collections, share toggle, sync status.
+- 2026-03-30 (morning): Session clean — no mistakes. Migrated data model to GitHub hybrid (community data) + localStorage (personal). Added favourites, collections, share toggle, sync status.
+- 2026-03-30 (continued): Price update UX overhaul — Apify 10→5 items, always show all results in modal, GitHub commit on selection. Packaging: optional toggle + editable amount in Costing tab. Recipe Book: starred filter ("☆ All / ★ Starred" toggle). Known issue: modal candidate rows still lack contrast (use primary/white background).
