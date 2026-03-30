@@ -24,19 +24,30 @@ export const handler = async (event) => {
     return { statusCode: 400, headers: CORS_HEADERS, body: "Missing or invalid url" };
   }
 
-  const resp = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; BakersCostPro/1.0; +https://bakerspro.netlify.app)",
-      Accept: "text/html,application/xhtml+xml,*/*",
-    },
-  });
+  try {
+    const resp = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-ZA,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+      },
+      redirect: "follow",
+    });
 
-  const html = await resp.text();
+    const html = await resp.text();
 
-  return {
-    statusCode: resp.ok ? 200 : resp.status,
-    headers: { ...CORS_HEADERS, "Content-Type": "text/html; charset=utf-8" },
-    body: html,
-  };
+    return {
+      statusCode: resp.ok ? 200 : resp.status,
+      headers: { ...CORS_HEADERS, "Content-Type": "text/html; charset=utf-8" },
+      body: html,
+    };
+  } catch (err) {
+    return {
+      statusCode: 502,
+      headers: CORS_HEADERS,
+      body: `Could not reach ${url}: ${err.message}`,
+    };
+  }
 };

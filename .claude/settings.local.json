@@ -10,7 +10,11 @@
       "Bash(node -e \":*)",
       "Bash(npm list:*)",
       "Bash(node:*)",
-      "Bash(echo \"Exit: $?\")"
+      "Bash(echo \"Exit: $?\")",
+      "Bash(ls -la E:/bakers_pro/.env*)",
+      "Bash(mkdir:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   },
   "enabledPlugins": {

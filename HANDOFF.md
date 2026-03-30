@@ -20,13 +20,12 @@
 
 | Layer | Status | Notes |
 |---|---|---|
-| Scanner (URL import) | ✅ stable | Netlify function + JSON-LD + HTML fallback |
+| Scanner (URL import) | ✅ stable but limited | Netlify function + JSON-LD + HTML fallback |
 | Scanner (file import) | ✅ stable | .txt .md .docx .pdf .xlsx |
 | Ingredients DB | ✅ stable | inline price editing, bulk Apify/Checkers update, status badges |
 | Costing tab | ✅ stable | overhead formula, sell-price suggestions, edit mode |
 | Recipe Book | ✅ stable | contents list, live cost, ★ favourites, collections, delete |
 | GitHub community sync | ✅ stable | mount fetch + post-Apify commit + recipe share |
-| Live Prices | ❌ not started | Coming Soon placeholder |
 | Tests | ❌ not started | no test framework configured |
 
 ## Known bugs
@@ -37,15 +36,16 @@ None currently recorded.
 
 - **Recipe Book: search/filter** — filter list by title as the collection grows
 - **Recipe Book: duplicate detection** — warn on import if a recipe with the same title already exists
-- **Live Prices tab** — SA grocery price lookup (no paid API)
 - **Packaging & markup as separate add-ons** — allow per-recipe packaging cost and markup % on top of overhead
 - **Contributor identity** — currently hardcoded `"anonymous"`; could allow user to set a display name in preferences
 
 ## Next session plan
 
-1. **▶ Recipe Book search/filter** — add a search input above the contents list (top priority)
-2. **Duplicate detection** — check title match on import, prompt to replace or keep both
-3. **Live Prices tab** — SA grocery price lookup
+1. **fix ingredients DB to reflect only ml/l g/kg and each in the unit fields, to make the package editable for manual updates.
+2. **files in data/ need to keep track of date last updated, otherwise it always looks like it was updated today.
+3. **remove live price tab. no need for it anymore.
+4. **Still 404 on recipe imports.
+
 
 ## Architecture reminder
 

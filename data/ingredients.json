@@ -1,769 +1,772 @@
-[
-  {
-    "name": "Almond Flour",
-    "aliases": [
-      "almond flour",
-      "almond"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.265,
-    "pkg": "1000g · R265",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "All Spice",
-    "aliases": [
-      "all spice",
-      "allspice",
-      "mixed spice"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.64,
-    "pkg": "25g · R16",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Banana",
-    "aliases": [
-      "banana",
-      "bananas"
-    ],
-    "unit": "each",
-    "costPerUnit": 3,
-    "pkg": "6 for R18",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Bicarbonate of Soda",
-    "aliases": [
-      "bicarb",
-      "baking soda",
-      "bicarbonate of soda",
-      "bicarbonate",
-      "sodium bicarbonate"
-    ],
-    "unit": "tsp",
-    "costPerUnit": 0.072115,
-    "pkg": "208 tsp · R15",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Baking Powder",
-    "aliases": [
-      "bpowder",
-      "baking powder"
-    ],
-    "unit": "tsp",
-    "costPerUnit": 0.133333,
-    "pkg": "210 tsp · R28",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Brown Sugar",
-    "aliases": [
-      "bsugar",
-      "brown sugar",
-      "demerara",
-      "light brown sugar",
-      "dark brown sugar"
-    ],
-    "unit": "cup",
-    "costPerUnit": 2.553191,
-    "pkg": "11.75 cup · R30",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Butter (cup)",
-    "aliases": [
-      "butter"
-    ],
-    "unit": "cup",
-    "costPerUnit": 28.5,
-    "pkg": "2 cup · R57",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Butter (g)",
-    "aliases": [
-      "butter"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.114,
-    "pkg": "500g · R57",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Buttermilk",
-    "aliases": [
-      "buttermilk"
-    ],
-    "unit": "cup",
-    "costPerUnit": 5,
-    "pkg": "4 cup · R20",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Caramel Treat",
-    "aliases": [
-      "caramel treat",
-      "caramel",
-      "dulce de leche",
-      "caramel spread"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.091639,
-    "pkg": "360g · R32.99",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Carrots",
-    "aliases": [
-      "carrot",
-      "carrots",
-      "grated carrot",
-      "grated carrots"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.011,
-    "pkg": "1000g · R11",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Castor Sugar",
-    "aliases": [
-      "castor sugar",
-      "caster sugar",
-      "superfine sugar"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.10598,
-    "pkg": "500g · R52.99",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Dry Chillies",
-    "aliases": [
-      "chillies dry",
-      "dried chilli",
-      "chilli",
-      "chili flakes",
-      "red chilli"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.2,
-    "pkg": "50g · R10",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Dark Chocolate",
-    "aliases": [
-      "choc dark",
-      "dark chocolate",
-      "dark choc",
-      "bittersweet chocolate",
-      "70% chocolate"
-    ],
-    "unit": "slab",
-    "costPerUnit": 47,
-    "pkg": "1 slab · R47",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Milk Chocolate",
-    "aliases": [
-      "choc milk",
-      "milk chocolate",
-      "milk choc"
-    ],
-    "unit": "slab",
-    "costPerUnit": 15,
-    "pkg": "1 slab · R15",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "White Chocolate",
-    "aliases": [
-      "choc white",
-      "white chocolate",
-      "white choc"
-    ],
-    "unit": "slab",
-    "costPerUnit": 11,
-    "pkg": "1 slab · R11",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Ground Cinnamon",
-    "aliases": [
-      "cinamon",
-      "cinnamon",
-      "ground cinnamon",
-      "cinnamon powder"
-    ],
-    "unit": "tsp",
-    "costPerUnit": 0.394737,
-    "pkg": "38 tsp · R15",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Cinnamon Stick",
-    "aliases": [
-      "cinnamon rolls",
-      "cinnamon sticks",
-      "cinnamon stick"
-    ],
-    "unit": "each",
-    "costPerUnit": 1.923077,
-    "pkg": "13 for R25",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Cloves",
-    "aliases": [
-      "clove",
-      "cloves",
-      "ground cloves"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.34,
-    "pkg": "25g · R8.50",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Cocoa Powder",
-    "aliases": [
-      "coco",
-      "cocoa",
-      "cocoa powder",
-      "cacao",
-      "dutch cocoa",
-      "unsweetened cocoa"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.045,
-    "pkg": "1000g · R45",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Coconut Sugar",
-    "aliases": [
-      "coconut sugar",
-      "palm sugar"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.256667,
-    "pkg": "300g · R77",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Coffee",
-    "aliases": [
-      "coffee",
-      "instant coffee",
-      "espresso",
-      "strong coffee"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.26,
-    "pkg": "250g · R65",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Condensed Milk",
-    "aliases": [
-      "condenced milk",
-      "condensed milk",
-      "sweetened condensed milk"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.064935,
-    "pkg": "385g · R25",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Corn Syrup",
-    "aliases": [
-      "corn syrup",
-      "golden syrup",
-      "light corn syrup"
-    ],
-    "unit": "ml",
-    "costPerUnit": 0.372093,
-    "pkg": "473ml · R176",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Cornflour",
-    "aliases": [
-      "cornflour",
-      "cornstarch",
-      "corn flour",
-      "corn starch",
-      "maizena"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.052,
-    "pkg": "500g · R26",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Cream",
-    "aliases": [
-      "cream",
-      "whipping cream",
-      "double cream",
-      "heavy cream",
-      "fresh cream"
-    ],
-    "unit": "cup",
-    "costPerUnit": 30,
-    "pkg": "1 cup · R30",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Cream Cheese",
-    "aliases": [
-      "cream cheese",
-      "philadelphia"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.25213,
-    "pkg": "230g · R57.99",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Dates",
-    "aliases": [
-      "date",
-      "dates",
-      "medjool dates",
-      "pitted dates"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.05,
-    "pkg": "500g · R25",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Eggs",
-    "aliases": [
-      "egg",
-      "eggs",
-      "large eggs",
-      "xl eggs"
-    ],
-    "unit": "each",
-    "costPerUnit": 1.5,
-    "pkg": "30 · R45",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Flake",
-    "aliases": [
-      "flake",
-      "chocolate flake",
-      "cadbury flake"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.374688,
-    "pkg": "32g · R11.99",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Flour",
-    "aliases": [
-      "flour",
-      "cake flour",
-      "all purpose flour",
-      "plain flour",
-      "all-purpose flour"
-    ],
-    "unit": "cup",
-    "costPerUnit": 2.499375,
-    "pkg": "16 cup · R39.99",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Food Colouring",
-    "aliases": [
-      "food colouring",
-      "food coloring",
-      "food dye",
-      "red food colouring"
-    ],
-    "unit": "ml",
-    "costPerUnit": 0.2625,
-    "pkg": "40ml · R10.50",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Gelatine",
-    "aliases": [
-      "gelatine",
-      "gelatin",
-      "gelatin powder"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.11,
-    "pkg": "250g · R27.50",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Glutagon Flour",
-    "aliases": [
-      "glutagon flour",
-      "gluten free flour",
-      "gluten flour",
-      "gluten-free flour"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.082,
-    "pkg": "500g · R41",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Hazelnuts",
-    "aliases": [
-      "hazelnut",
-      "hazelnuts",
-      "roasted hazelnuts"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.3,
-    "pkg": "100g · R30",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Icing Sugar",
-    "aliases": [
-      "icing sugar",
-      "powdered sugar",
-      "confectioners sugar",
-      "confectioners' sugar",
-      "icing"
-    ],
-    "unit": "cup",
-    "costPerUnit": 3.25,
-    "pkg": "8 cup · R26",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Lemons",
-    "aliases": [
-      "lemon",
-      "lemons",
-      "lemon zest",
-      "fresh lemon"
-    ],
-    "unit": "each",
-    "costPerUnit": 1,
-    "pkg": "30 · R30",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Marshmallow",
-    "aliases": [
-      "marshmallow",
-      "marshmallows",
-      "mini marshmallows"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.08,
-    "pkg": "150g · R12",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Mascarpone",
-    "aliases": [
-      "mascarpone",
-      "mascarpone cheese"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.16,
-    "pkg": "250g · R40",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Milk",
-    "aliases": [
-      "milk",
-      "whole milk",
-      "full cream milk",
-      "fresh milk"
-    ],
-    "unit": "cup",
-    "costPerUnit": 3.75,
-    "pkg": "8 cup · R30",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Nutmeg",
-    "aliases": [
-      "nutmeg",
-      "ground nutmeg"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.38,
-    "pkg": "25g · R9.50",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Nutmeg Whole",
-    "aliases": [
-      "nutmeg whole",
-      "whole nutmeg"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.6,
-    "pkg": "25g · R15",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Oil",
-    "aliases": [
-      "oil",
-      "vegetable oil",
-      "sunflower oil",
-      "canola oil",
-      "cooking oil"
-    ],
-    "unit": "cup",
-    "costPerUnit": 9.87375,
-    "pkg": "8 cup · R78.99",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Pecan Nuts",
-    "aliases": [
-      "pecan",
-      "pecans",
-      "pecan nuts",
-      "pecan halves"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.19,
-    "pkg": "1000g · R190",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Poppy Seeds",
-    "aliases": [
-      "poppyseeds",
-      "poppy seeds",
-      "poppy seed"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.22,
-    "pkg": "250g · R55",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Raisins",
-    "aliases": [
-      "raisin",
-      "raisins",
-      "sultanas",
-      "seedless raisins"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.066,
-    "pkg": "250g · R16.50",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Salt",
-    "aliases": [
-      "salt",
-      "fine salt",
-      "table salt",
-      "sea salt"
-    ],
-    "unit": "tsp",
-    "costPerUnit": 0.01963,
-    "pkg": "866 tsp · R17",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Self-raising Flour",
-    "aliases": [
-      "self-raising flour",
-      "self raising flour",
-      "sr flour",
-      "self-rise flour"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.01598,
-    "pkg": "2500g · R39.95",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "White Sugar",
-    "aliases": [
-      "sugar",
-      "white sugar",
-      "granulated sugar",
-      "cane sugar"
-    ],
-    "unit": "cup",
-    "costPerUnit": 3.083333,
-    "pkg": "12 cup · R37",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Vanilla Extract",
-    "aliases": [
-      "vanilla",
-      "vanilla extract",
-      "vanilla essence",
-      "pure vanilla"
-    ],
-    "unit": "ml",
-    "costPerUnit": 0.21,
-    "pkg": "100ml · R21",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Vanilla Pod",
-    "aliases": [
-      "vanilla pod",
-      "vanilla bean",
-      "vanilla beans"
-    ],
-    "unit": "each",
-    "costPerUnit": 20,
-    "pkg": "1 · R20",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Vegetable Shortening",
-    "aliases": [
-      "vegatable shortening",
-      "vegetable shortening",
-      "crisco",
-      "shortening",
-      "white fat"
-    ],
-    "unit": "cup",
-    "costPerUnit": 9,
-    "pkg": "2 cup · R18",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "White Vinegar",
-    "aliases": [
-      "vinegar",
-      "white vinegar",
-      "spirit vinegar"
-    ],
-    "unit": "ml",
-    "costPerUnit": 0.016,
-    "pkg": "750ml · R12",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Apple Cider Vinegar",
-    "aliases": [
-      "vinegar apple cider",
-      "apple cider vinegar",
-      "acv",
-      "cider vinegar"
-    ],
-    "unit": "ml",
-    "costPerUnit": 0.046,
-    "pkg": "500ml · R23",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Xanthan Gum",
-    "aliases": [
-      "xanthan gum",
-      "xanthan"
-    ],
-    "unit": "g",
-    "costPerUnit": 0.5,
-    "pkg": "100g · R50",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Digestive Biscuits",
-    "aliases": [
-      "digestive biscuits",
-      "digestives",
-      "biscuits",
-      "graham crackers"
-    ],
-    "unit": "pack",
-    "costPerUnit": 74.56,
-    "pkg": "1 pack · R74.56",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  },
-  {
-    "name": "Sour Cream",
-    "aliases": [
-      "sour cream",
-      "soured cream",
-      "cultured cream"
-    ],
-    "unit": "ml",
-    "costPerUnit": 0.13996,
-    "pkg": "250ml · R34.99",
-    "dateLastUpdated": "2026-03-30",
-    "needsCosting": false
-  }
-]
+{
+  "lastUpdated": "2025-01-01",
+  "items": [
+    {
+      "name": "Almond Flour",
+      "aliases": [
+        "almond flour",
+        "almond"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.265,
+      "pkg": "1000g · R265",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "All Spice",
+      "aliases": [
+        "all spice",
+        "allspice",
+        "mixed spice"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.64,
+      "pkg": "25g · R16",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Banana",
+      "aliases": [
+        "banana",
+        "bananas"
+      ],
+      "unit": "each",
+      "costPerUnit": 3,
+      "pkg": "6 · R18",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Bicarbonate of Soda",
+      "aliases": [
+        "bicarb",
+        "baking soda",
+        "bicarbonate of soda",
+        "bicarbonate",
+        "sodium bicarbonate"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.014423,
+      "pkg": "1040ml · R15",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Baking Powder",
+      "aliases": [
+        "bpowder",
+        "baking powder"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.026667,
+      "pkg": "1050ml · R28",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Brown Sugar",
+      "aliases": [
+        "bsugar",
+        "brown sugar",
+        "demerara",
+        "light brown sugar",
+        "dark brown sugar"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.010638,
+      "pkg": "2820g · R30",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Butter (cup)",
+      "aliases": [
+        "butter"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.11875,
+      "pkg": "480ml · R57",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Butter (g)",
+      "aliases": [
+        "butter"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.114,
+      "pkg": "500g · R57",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Buttermilk",
+      "aliases": [
+        "buttermilk"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.020833,
+      "pkg": "960ml · R20",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Caramel Treat",
+      "aliases": [
+        "caramel treat",
+        "caramel",
+        "dulce de leche",
+        "caramel spread"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.091639,
+      "pkg": "360g · R32.99",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Carrots",
+      "aliases": [
+        "carrot",
+        "carrots",
+        "grated carrot",
+        "grated carrots"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.011,
+      "pkg": "1000g · R11",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Castor Sugar",
+      "aliases": [
+        "castor sugar",
+        "caster sugar",
+        "superfine sugar"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.10598,
+      "pkg": "500g · R52.99",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Dry Chillies",
+      "aliases": [
+        "chillies dry",
+        "dried chilli",
+        "chilli",
+        "chili flakes",
+        "red chilli"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.2,
+      "pkg": "50g · R10",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Dark Chocolate",
+      "aliases": [
+        "choc dark",
+        "dark chocolate",
+        "dark choc",
+        "bittersweet chocolate",
+        "70% chocolate"
+      ],
+      "unit": "each",
+      "costPerUnit": 47,
+      "pkg": "1 · R47",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Milk Chocolate",
+      "aliases": [
+        "choc milk",
+        "milk chocolate",
+        "milk choc"
+      ],
+      "unit": "each",
+      "costPerUnit": 15,
+      "pkg": "1 · R15",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "White Chocolate",
+      "aliases": [
+        "choc white",
+        "white chocolate",
+        "white choc"
+      ],
+      "unit": "each",
+      "costPerUnit": 11,
+      "pkg": "1 · R11",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Ground Cinnamon",
+      "aliases": [
+        "cinamon",
+        "cinnamon",
+        "ground cinnamon",
+        "cinnamon powder"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.078947,
+      "pkg": "190ml · R15",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Cinnamon Stick",
+      "aliases": [
+        "cinnamon rolls",
+        "cinnamon sticks",
+        "cinnamon stick"
+      ],
+      "unit": "each",
+      "costPerUnit": 1.923077,
+      "pkg": "13 · R25",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Cloves",
+      "aliases": [
+        "clove",
+        "cloves",
+        "ground cloves"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.34,
+      "pkg": "25g · R8.50",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Cocoa Powder",
+      "aliases": [
+        "coco",
+        "cocoa",
+        "cocoa powder",
+        "cacao",
+        "dutch cocoa",
+        "unsweetened cocoa"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.045,
+      "pkg": "1000g · R45",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Coconut Sugar",
+      "aliases": [
+        "coconut sugar",
+        "palm sugar"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.256667,
+      "pkg": "300g · R77",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Coffee",
+      "aliases": [
+        "coffee",
+        "instant coffee",
+        "espresso",
+        "strong coffee"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.26,
+      "pkg": "250g · R65",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Condensed Milk",
+      "aliases": [
+        "condenced milk",
+        "condensed milk",
+        "sweetened condensed milk"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.064935,
+      "pkg": "385g · R25",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Corn Syrup",
+      "aliases": [
+        "corn syrup",
+        "golden syrup",
+        "light corn syrup"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.372093,
+      "pkg": "473ml · R176",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Cornflour",
+      "aliases": [
+        "cornflour",
+        "cornstarch",
+        "corn flour",
+        "corn starch",
+        "maizena"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.052,
+      "pkg": "500g · R26",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Cream",
+      "aliases": [
+        "cream",
+        "whipping cream",
+        "double cream",
+        "heavy cream",
+        "fresh cream"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.125,
+      "pkg": "240ml · R30",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Cream Cheese",
+      "aliases": [
+        "cream cheese",
+        "philadelphia"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.25213,
+      "pkg": "230g · R57.99",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Dates",
+      "aliases": [
+        "date",
+        "dates",
+        "medjool dates",
+        "pitted dates"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.05,
+      "pkg": "500g · R25",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Eggs",
+      "aliases": [
+        "egg",
+        "eggs",
+        "large eggs",
+        "xl eggs"
+      ],
+      "unit": "each",
+      "costPerUnit": 1.5,
+      "pkg": "30 · R45",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Flake",
+      "aliases": [
+        "flake",
+        "chocolate flake",
+        "cadbury flake"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.374688,
+      "pkg": "32g · R11.99",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Flour",
+      "aliases": [
+        "flour",
+        "cake flour",
+        "all purpose flour",
+        "plain flour",
+        "all-purpose flour"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.010414,
+      "pkg": "3840g · R39.99",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Food Colouring",
+      "aliases": [
+        "food colouring",
+        "food coloring",
+        "food dye",
+        "red food colouring"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.2625,
+      "pkg": "40ml · R10.50",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Gelatine",
+      "aliases": [
+        "gelatine",
+        "gelatin",
+        "gelatin powder"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.11,
+      "pkg": "250g · R27.50",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Glutagon Flour",
+      "aliases": [
+        "glutagon flour",
+        "gluten free flour",
+        "gluten flour",
+        "gluten-free flour"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.082,
+      "pkg": "500g · R41",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Hazelnuts",
+      "aliases": [
+        "hazelnut",
+        "hazelnuts",
+        "roasted hazelnuts"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.3,
+      "pkg": "100g · R30",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Icing Sugar",
+      "aliases": [
+        "icing sugar",
+        "powdered sugar",
+        "confectioners sugar",
+        "confectioners' sugar",
+        "icing"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.013542,
+      "pkg": "1920g · R26",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Lemons",
+      "aliases": [
+        "lemon",
+        "lemons",
+        "lemon zest",
+        "fresh lemon"
+      ],
+      "unit": "each",
+      "costPerUnit": 1,
+      "pkg": "30 · R30",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Marshmallow",
+      "aliases": [
+        "marshmallow",
+        "marshmallows",
+        "mini marshmallows"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.08,
+      "pkg": "150g · R12",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Mascarpone",
+      "aliases": [
+        "mascarpone",
+        "mascarpone cheese"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.16,
+      "pkg": "250g · R40",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Milk",
+      "aliases": [
+        "milk",
+        "whole milk",
+        "full cream milk",
+        "fresh milk"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.015625,
+      "pkg": "1920ml · R30",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Nutmeg",
+      "aliases": [
+        "nutmeg",
+        "ground nutmeg"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.38,
+      "pkg": "25g · R9.50",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Nutmeg Whole",
+      "aliases": [
+        "nutmeg whole",
+        "whole nutmeg"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.6,
+      "pkg": "25g · R15",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Oil",
+      "aliases": [
+        "oil",
+        "vegetable oil",
+        "sunflower oil",
+        "canola oil",
+        "cooking oil"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.041141,
+      "pkg": "1920ml · R78.99",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Pecan Nuts",
+      "aliases": [
+        "pecan",
+        "pecans",
+        "pecan nuts",
+        "pecan halves"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.19,
+      "pkg": "1000g · R190",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Poppy Seeds",
+      "aliases": [
+        "poppyseeds",
+        "poppy seeds",
+        "poppy seed"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.22,
+      "pkg": "250g · R55",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Raisins",
+      "aliases": [
+        "raisin",
+        "raisins",
+        "sultanas",
+        "seedless raisins"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.066,
+      "pkg": "250g · R16.50",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Salt",
+      "aliases": [
+        "salt",
+        "fine salt",
+        "table salt",
+        "sea salt"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.003926,
+      "pkg": "4330g · R17",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Self-raising Flour",
+      "aliases": [
+        "self-raising flour",
+        "self raising flour",
+        "sr flour",
+        "self-rise flour"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.01598,
+      "pkg": "2500g · R39.95",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "White Sugar",
+      "aliases": [
+        "sugar",
+        "white sugar",
+        "granulated sugar",
+        "cane sugar"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.012847,
+      "pkg": "2880g · R37",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Vanilla Extract",
+      "aliases": [
+        "vanilla",
+        "vanilla extract",
+        "vanilla essence",
+        "pure vanilla"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.21,
+      "pkg": "100ml · R21",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Vanilla Pod",
+      "aliases": [
+        "vanilla pod",
+        "vanilla bean",
+        "vanilla beans"
+      ],
+      "unit": "each",
+      "costPerUnit": 20,
+      "pkg": "1 · R20",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Vegetable Shortening",
+      "aliases": [
+        "vegatable shortening",
+        "vegetable shortening",
+        "crisco",
+        "shortening",
+        "white fat"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.0375,
+      "pkg": "480ml · R18",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "White Vinegar",
+      "aliases": [
+        "vinegar",
+        "white vinegar",
+        "spirit vinegar"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.016,
+      "pkg": "750ml · R12",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Apple Cider Vinegar",
+      "aliases": [
+        "vinegar apple cider",
+        "apple cider vinegar",
+        "acv",
+        "cider vinegar"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.046,
+      "pkg": "500ml · R23",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Xanthan Gum",
+      "aliases": [
+        "xanthan gum",
+        "xanthan"
+      ],
+      "unit": "g",
+      "costPerUnit": 0.5,
+      "pkg": "100g · R50",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Digestive Biscuits",
+      "aliases": [
+        "digestive biscuits",
+        "digestives",
+        "biscuits",
+        "graham crackers"
+      ],
+      "unit": "each",
+      "costPerUnit": 74.56,
+      "pkg": "1 · R74.56",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    },
+    {
+      "name": "Sour Cream",
+      "aliases": [
+        "sour cream",
+        "soured cream",
+        "cultured cream"
+      ],
+      "unit": "ml",
+      "costPerUnit": 0.13996,
+      "pkg": "250ml · R34.99",
+      "dateLastUpdated": "2024-01-01",
+      "needsCosting": true
+    }
+  ]
+}

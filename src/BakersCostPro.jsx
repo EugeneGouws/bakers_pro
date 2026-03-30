@@ -16,68 +16,68 @@ import { fetchGitHubJson, commitGitHubJson } from "./lib/github.js";
 import { loadFavourites, saveFavourites, loadCollections, saveCollections } from "./lib/storage.js";
 
 // ============================================================
-// INGREDIENT DATABASE  (source: Cake_Costings.xlsx)
+// INGREDIENT DATABASE  (source: data/ingredients.json)
 // Format: { name, aliases[], unit, costPerUnit, pkg }
 // dateLastUpdated and needsCosting are added in state init.
 // ============================================================
 const INGREDIENTS_DB = [
-  { name: "Almond Flour", aliases: ["almond flour", "almond"], unit: "g", costPerUnit: 0.265, pkg: "1000g · R265" },
-  { name: "All Spice", aliases: ["all spice", "allspice", "mixed spice"], unit: "g", costPerUnit: 0.64, pkg: "25g · R16" },
-  { name: "Banana", aliases: ["banana", "bananas"], unit: "each", costPerUnit: 3, pkg: "6 for R18" },
-  { name: "Bicarbonate of Soda", aliases: ["bicarb", "baking soda", "bicarbonate of soda", "bicarbonate", "sodium bicarbonate"], unit: "tsp", costPerUnit: 0.072115, pkg: "208 tsp · R15" },
-  { name: "Baking Powder", aliases: ["bpowder", "baking powder"], unit: "tsp", costPerUnit: 0.133333, pkg: "210 tsp · R28" },
-  { name: "Brown Sugar", aliases: ["bsugar", "brown sugar", "demerara", "light brown sugar", "dark brown sugar"], unit: "cup", costPerUnit: 2.553191, pkg: "11.75 cup · R30" },
-  { name: "Butter (cup)", aliases: ["butter"], unit: "cup", costPerUnit: 28.5, pkg: "2 cup · R57" },
+  { name: "Almond Flour", aliases: ["almond flour","almond"], unit: "g", costPerUnit: 0.265, pkg: "1000g · R265" },
+  { name: "All Spice", aliases: ["all spice","allspice","mixed spice"], unit: "g", costPerUnit: 0.64, pkg: "25g · R16" },
+  { name: "Banana", aliases: ["banana","bananas"], unit: "each", costPerUnit: 3, pkg: "6 · R18" },
+  { name: "Bicarbonate of Soda", aliases: ["bicarb","baking soda","bicarbonate of soda","bicarbonate","sodium bicarbonate"], unit: "ml", costPerUnit: 0.014423, pkg: "1040ml · R15" },
+  { name: "Baking Powder", aliases: ["bpowder","baking powder"], unit: "ml", costPerUnit: 0.026667, pkg: "1050ml · R28" },
+  { name: "Brown Sugar", aliases: ["bsugar","brown sugar","demerara","light brown sugar","dark brown sugar"], unit: "g", costPerUnit: 0.010638, pkg: "2820g · R30" },
+  { name: "Butter (cup)", aliases: ["butter"], unit: "ml", costPerUnit: 0.11875, pkg: "480ml · R57" },
   { name: "Butter (g)", aliases: ["butter"], unit: "g", costPerUnit: 0.114, pkg: "500g · R57" },
-  { name: "Buttermilk", aliases: ["buttermilk"], unit: "cup", costPerUnit: 5, pkg: "4 cup · R20" },
-  { name: "Caramel Treat", aliases: ["caramel treat", "caramel", "dulce de leche", "caramel spread"], unit: "g", costPerUnit: 0.091639, pkg: "360g · R32.99" },
-  { name: "Carrots", aliases: ["carrot", "carrots", "grated carrot", "grated carrots"], unit: "g", costPerUnit: 0.011, pkg: "1000g · R11" },
-  { name: "Castor Sugar", aliases: ["castor sugar", "caster sugar", "superfine sugar"], unit: "g", costPerUnit: 0.10598, pkg: "500g · R52.99" },
-  { name: "Dry Chillies", aliases: ["chillies dry", "dried chilli", "chilli", "chili flakes", "red chilli"], unit: "g", costPerUnit: 0.2, pkg: "50g · R10" },
-  { name: "Dark Chocolate", aliases: ["choc dark", "dark chocolate", "dark choc", "bittersweet chocolate", "70% chocolate"], unit: "slab", costPerUnit: 47, pkg: "1 slab · R47" },
-  { name: "Milk Chocolate", aliases: ["choc milk", "milk chocolate", "milk choc"], unit: "slab", costPerUnit: 15, pkg: "1 slab · R15" },
-  { name: "White Chocolate", aliases: ["choc white", "white chocolate", "white choc"], unit: "slab", costPerUnit: 11, pkg: "1 slab · R11" },
-  { name: "Ground Cinnamon", aliases: ["cinamon", "cinnamon", "ground cinnamon", "cinnamon powder"], unit: "tsp", costPerUnit: 0.394737, pkg: "38 tsp · R15" },
-  { name: "Cinnamon Stick", aliases: ["cinnamon rolls", "cinnamon sticks", "cinnamon stick"], unit: "each", costPerUnit: 1.923077, pkg: "13 for R25" },
-  { name: "Cloves", aliases: ["clove", "cloves", "ground cloves"], unit: "g", costPerUnit: 0.34, pkg: "25g · R8.50" },
-  { name: "Cocoa Powder", aliases: ["coco", "cocoa", "cocoa powder", "cacao", "dutch cocoa", "unsweetened cocoa"], unit: "g", costPerUnit: 0.045, pkg: "1000g · R45" },
-  { name: "Coconut Sugar", aliases: ["coconut sugar", "palm sugar"], unit: "g", costPerUnit: 0.256667, pkg: "300g · R77" },
-  { name: "Coffee", aliases: ["coffee", "instant coffee", "espresso", "strong coffee"], unit: "g", costPerUnit: 0.26, pkg: "250g · R65" },
-  { name: "Condensed Milk", aliases: ["condenced milk", "condensed milk", "sweetened condensed milk"], unit: "g", costPerUnit: 0.064935, pkg: "385g · R25" },
-  { name: "Corn Syrup", aliases: ["corn syrup", "golden syrup", "light corn syrup"], unit: "ml", costPerUnit: 0.372093, pkg: "473ml · R176" },
-  { name: "Cornflour", aliases: ["cornflour", "cornstarch", "corn flour", "corn starch", "maizena"], unit: "g", costPerUnit: 0.052, pkg: "500g · R26" },
-  { name: "Cream", aliases: ["cream", "whipping cream", "double cream", "heavy cream", "fresh cream"], unit: "cup", costPerUnit: 30, pkg: "1 cup · R30" },
-  { name: "Cream Cheese", aliases: ["cream cheese", "philadelphia"], unit: "g", costPerUnit: 0.25213, pkg: "230g · R57.99" },
-  { name: "Dates", aliases: ["date", "dates", "medjool dates", "pitted dates"], unit: "g", costPerUnit: 0.05, pkg: "500g · R25" },
-  { name: "Eggs", aliases: ["egg", "eggs", "large eggs", "xl eggs"], unit: "each", costPerUnit: 1.5, pkg: "30 · R45" },
-  { name: "Flake", aliases: ["flake", "chocolate flake", "cadbury flake"], unit: "g", costPerUnit: 0.374688, pkg: "32g · R11.99" },
-  { name: "Flour", aliases: ["flour", "cake flour", "all purpose flour", "plain flour", "all-purpose flour"], unit: "cup", costPerUnit: 2.499375, pkg: "16 cup · R39.99" },
-  { name: "Food Colouring", aliases: ["food colouring", "food coloring", "food dye", "red food colouring"], unit: "ml", costPerUnit: 0.2625, pkg: "40ml · R10.50" },
-  { name: "Gelatine", aliases: ["gelatine", "gelatin", "gelatin powder"], unit: "g", costPerUnit: 0.11, pkg: "250g · R27.50" },
-  { name: "Glutagon Flour", aliases: ["glutagon flour", "gluten free flour", "gluten flour", "gluten-free flour"], unit: "g", costPerUnit: 0.082, pkg: "500g · R41" },
-  { name: "Hazelnuts", aliases: ["hazelnut", "hazelnuts", "roasted hazelnuts"], unit: "g", costPerUnit: 0.3, pkg: "100g · R30" },
-  { name: "Icing Sugar", aliases: ["icing sugar", "powdered sugar", "confectioners sugar", "confectioners' sugar", "icing"], unit: "cup", costPerUnit: 3.25, pkg: "8 cup · R26" },
-  { name: "Lemons", aliases: ["lemon", "lemons", "lemon zest", "fresh lemon"], unit: "each", costPerUnit: 1, pkg: "30 · R30" },
-  { name: "Marshmallow", aliases: ["marshmallow", "marshmallows", "mini marshmallows"], unit: "g", costPerUnit: 0.08, pkg: "150g · R12" },
-  { name: "Mascarpone", aliases: ["mascarpone", "mascarpone cheese"], unit: "g", costPerUnit: 0.16, pkg: "250g · R40" },
-  { name: "Milk", aliases: ["milk", "whole milk", "full cream milk", "fresh milk"], unit: "cup", costPerUnit: 3.75, pkg: "8 cup · R30" },
-  { name: "Nutmeg", aliases: ["nutmeg", "ground nutmeg"], unit: "g", costPerUnit: 0.38, pkg: "25g · R9.50" },
-  { name: "Nutmeg Whole", aliases: ["nutmeg whole", "whole nutmeg"], unit: "g", costPerUnit: 0.6, pkg: "25g · R15" },
-  { name: "Oil", aliases: ["oil", "vegetable oil", "sunflower oil", "canola oil", "cooking oil"], unit: "cup", costPerUnit: 9.87375, pkg: "8 cup · R78.99" },
-  { name: "Pecan Nuts", aliases: ["pecan", "pecans", "pecan nuts", "pecan halves"], unit: "g", costPerUnit: 0.19, pkg: "1000g · R190" },
-  { name: "Poppy Seeds", aliases: ["poppyseeds", "poppy seeds", "poppy seed"], unit: "g", costPerUnit: 0.22, pkg: "250g · R55" },
-  { name: "Raisins", aliases: ["raisin", "raisins", "sultanas", "seedless raisins"], unit: "g", costPerUnit: 0.066, pkg: "250g · R16.50" },
-  { name: "Salt", aliases: ["salt", "fine salt", "table salt", "sea salt"], unit: "tsp", costPerUnit: 0.01963, pkg: "866 tsp · R17" },
-  { name: "Self-raising Flour", aliases: ["self-raising flour", "self raising flour", "sr flour", "self-rise flour"], unit: "g", costPerUnit: 0.01598, pkg: "2500g · R39.95" },
-  { name: "White Sugar", aliases: ["sugar", "white sugar", "granulated sugar", "cane sugar"], unit: "cup", costPerUnit: 3.083333, pkg: "12 cup · R37" },
-  { name: "Vanilla Extract", aliases: ["vanilla", "vanilla extract", "vanilla essence", "pure vanilla"], unit: "ml", costPerUnit: 0.21, pkg: "100ml · R21" },
-  { name: "Vanilla Pod", aliases: ["vanilla pod", "vanilla bean", "vanilla beans"], unit: "each", costPerUnit: 20, pkg: "1 · R20" },
-  { name: "Vegetable Shortening", aliases: ["vegatable shortening", "vegetable shortening", "crisco", "shortening", "white fat"], unit: "cup", costPerUnit: 9, pkg: "2 cup · R18" },
-  { name: "White Vinegar", aliases: ["vinegar", "white vinegar", "spirit vinegar"], unit: "ml", costPerUnit: 0.016, pkg: "750ml · R12" },
-  { name: "Apple Cider Vinegar", aliases: ["vinegar apple cider", "apple cider vinegar", "acv", "cider vinegar"], unit: "ml", costPerUnit: 0.046, pkg: "500ml · R23" },
-  { name: "Xanthan Gum", aliases: ["xanthan gum", "xanthan"], unit: "g", costPerUnit: 0.5, pkg: "100g · R50" },
-  { name: "Digestive Biscuits", aliases: ["digestive biscuits", "digestives", "biscuits", "graham crackers"], unit: "pack", costPerUnit: 74.56, pkg: "1 pack · R74.56" },
-  { name: "Sour Cream", aliases: ["sour cream", "soured cream", "cultured cream"], unit: "ml", costPerUnit: 0.13996, pkg: "250ml · R34.99" },
+  { name: "Buttermilk", aliases: ["buttermilk"], unit: "ml", costPerUnit: 0.020833, pkg: "960ml · R20" },
+  { name: "Caramel Treat", aliases: ["caramel treat","caramel","dulce de leche","caramel spread"], unit: "g", costPerUnit: 0.091639, pkg: "360g · R32.99" },
+  { name: "Carrots", aliases: ["carrot","carrots","grated carrot","grated carrots"], unit: "g", costPerUnit: 0.011, pkg: "1000g · R11" },
+  { name: "Castor Sugar", aliases: ["castor sugar","caster sugar","superfine sugar"], unit: "g", costPerUnit: 0.10598, pkg: "500g · R52.99" },
+  { name: "Dry Chillies", aliases: ["chillies dry","dried chilli","chilli","chili flakes","red chilli"], unit: "g", costPerUnit: 0.2, pkg: "50g · R10" },
+  { name: "Dark Chocolate", aliases: ["choc dark","dark chocolate","dark choc","bittersweet chocolate","70% chocolate"], unit: "each", costPerUnit: 47, pkg: "1 · R47" },
+  { name: "Milk Chocolate", aliases: ["choc milk","milk chocolate","milk choc"], unit: "each", costPerUnit: 15, pkg: "1 · R15" },
+  { name: "White Chocolate", aliases: ["choc white","white chocolate","white choc"], unit: "each", costPerUnit: 11, pkg: "1 · R11" },
+  { name: "Ground Cinnamon", aliases: ["cinamon","cinnamon","ground cinnamon","cinnamon powder"], unit: "ml", costPerUnit: 0.078947, pkg: "190ml · R15" },
+  { name: "Cinnamon Stick", aliases: ["cinnamon rolls","cinnamon sticks","cinnamon stick"], unit: "each", costPerUnit: 1.923077, pkg: "13 · R25" },
+  { name: "Cloves", aliases: ["clove","cloves","ground cloves"], unit: "g", costPerUnit: 0.34, pkg: "25g · R8.50" },
+  { name: "Cocoa Powder", aliases: ["coco","cocoa","cocoa powder","cacao","dutch cocoa","unsweetened cocoa"], unit: "g", costPerUnit: 0.045, pkg: "1000g · R45" },
+  { name: "Coconut Sugar", aliases: ["coconut sugar","palm sugar"], unit: "g", costPerUnit: 0.256667, pkg: "300g · R77" },
+  { name: "Coffee", aliases: ["coffee","instant coffee","espresso","strong coffee"], unit: "g", costPerUnit: 0.26, pkg: "250g · R65" },
+  { name: "Condensed Milk", aliases: ["condenced milk","condensed milk","sweetened condensed milk"], unit: "g", costPerUnit: 0.064935, pkg: "385g · R25" },
+  { name: "Corn Syrup", aliases: ["corn syrup","golden syrup","light corn syrup"], unit: "ml", costPerUnit: 0.372093, pkg: "473ml · R176" },
+  { name: "Cornflour", aliases: ["cornflour","cornstarch","corn flour","corn starch","maizena"], unit: "g", costPerUnit: 0.052, pkg: "500g · R26" },
+  { name: "Cream", aliases: ["cream","whipping cream","double cream","heavy cream","fresh cream"], unit: "ml", costPerUnit: 0.125, pkg: "240ml · R30" },
+  { name: "Cream Cheese", aliases: ["cream cheese","philadelphia"], unit: "g", costPerUnit: 0.25213, pkg: "230g · R57.99" },
+  { name: "Dates", aliases: ["date","dates","medjool dates","pitted dates"], unit: "g", costPerUnit: 0.05, pkg: "500g · R25" },
+  { name: "Eggs", aliases: ["egg","eggs","large eggs","xl eggs"], unit: "each", costPerUnit: 1.5, pkg: "30 · R45" },
+  { name: "Flake", aliases: ["flake","chocolate flake","cadbury flake"], unit: "g", costPerUnit: 0.374688, pkg: "32g · R11.99" },
+  { name: "Flour", aliases: ["flour","cake flour","all purpose flour","plain flour","all-purpose flour"], unit: "g", costPerUnit: 0.010414, pkg: "3840g · R39.99" },
+  { name: "Food Colouring", aliases: ["food colouring","food coloring","food dye","red food colouring"], unit: "ml", costPerUnit: 0.2625, pkg: "40ml · R10.50" },
+  { name: "Gelatine", aliases: ["gelatine","gelatin","gelatin powder"], unit: "g", costPerUnit: 0.11, pkg: "250g · R27.50" },
+  { name: "Glutagon Flour", aliases: ["glutagon flour","gluten free flour","gluten flour","gluten-free flour"], unit: "g", costPerUnit: 0.082, pkg: "500g · R41" },
+  { name: "Hazelnuts", aliases: ["hazelnut","hazelnuts","roasted hazelnuts"], unit: "g", costPerUnit: 0.3, pkg: "100g · R30" },
+  { name: "Icing Sugar", aliases: ["icing sugar","powdered sugar","confectioners sugar","confectioners' sugar","icing"], unit: "g", costPerUnit: 0.013542, pkg: "1920g · R26" },
+  { name: "Lemons", aliases: ["lemon","lemons","lemon zest","fresh lemon"], unit: "each", costPerUnit: 1, pkg: "30 · R30" },
+  { name: "Marshmallow", aliases: ["marshmallow","marshmallows","mini marshmallows"], unit: "g", costPerUnit: 0.08, pkg: "150g · R12" },
+  { name: "Mascarpone", aliases: ["mascarpone","mascarpone cheese"], unit: "g", costPerUnit: 0.16, pkg: "250g · R40" },
+  { name: "Milk", aliases: ["milk","whole milk","full cream milk","fresh milk"], unit: "ml", costPerUnit: 0.015625, pkg: "1920ml · R30" },
+  { name: "Nutmeg", aliases: ["nutmeg","ground nutmeg"], unit: "g", costPerUnit: 0.38, pkg: "25g · R9.50" },
+  { name: "Nutmeg Whole", aliases: ["nutmeg whole","whole nutmeg"], unit: "g", costPerUnit: 0.6, pkg: "25g · R15" },
+  { name: "Oil", aliases: ["oil","vegetable oil","sunflower oil","canola oil","cooking oil"], unit: "ml", costPerUnit: 0.041141, pkg: "1920ml · R78.99" },
+  { name: "Pecan Nuts", aliases: ["pecan","pecans","pecan nuts","pecan halves"], unit: "g", costPerUnit: 0.19, pkg: "1000g · R190" },
+  { name: "Poppy Seeds", aliases: ["poppyseeds","poppy seeds","poppy seed"], unit: "g", costPerUnit: 0.22, pkg: "250g · R55" },
+  { name: "Raisins", aliases: ["raisin","raisins","sultanas","seedless raisins"], unit: "g", costPerUnit: 0.066, pkg: "250g · R16.50" },
+  { name: "Salt", aliases: ["salt","fine salt","table salt","sea salt"], unit: "g", costPerUnit: 0.003926, pkg: "4330g · R17" },
+  { name: "Self-raising Flour", aliases: ["self-raising flour","self raising flour","sr flour","self-rise flour"], unit: "g", costPerUnit: 0.01598, pkg: "2500g · R39.95" },
+  { name: "White Sugar", aliases: ["sugar","white sugar","granulated sugar","cane sugar"], unit: "g", costPerUnit: 0.012847, pkg: "2880g · R37" },
+  { name: "Vanilla Extract", aliases: ["vanilla","vanilla extract","vanilla essence","pure vanilla"], unit: "ml", costPerUnit: 0.21, pkg: "100ml · R21" },
+  { name: "Vanilla Pod", aliases: ["vanilla pod","vanilla bean","vanilla beans"], unit: "each", costPerUnit: 20, pkg: "1 · R20" },
+  { name: "Vegetable Shortening", aliases: ["vegatable shortening","vegetable shortening","crisco","shortening","white fat"], unit: "ml", costPerUnit: 0.0375, pkg: "480ml · R18" },
+  { name: "White Vinegar", aliases: ["vinegar","white vinegar","spirit vinegar"], unit: "ml", costPerUnit: 0.016, pkg: "750ml · R12" },
+  { name: "Apple Cider Vinegar", aliases: ["vinegar apple cider","apple cider vinegar","acv","cider vinegar"], unit: "ml", costPerUnit: 0.046, pkg: "500ml · R23" },
+  { name: "Xanthan Gum", aliases: ["xanthan gum","xanthan"], unit: "g", costPerUnit: 0.5, pkg: "100g · R50" },
+  { name: "Digestive Biscuits", aliases: ["digestive biscuits","digestives","biscuits","graham crackers"], unit: "each", costPerUnit: 74.56, pkg: "1 · R74.56" },
+  { name: "Sour Cream", aliases: ["sour cream","soured cream","cultured cream"], unit: "ml", costPerUnit: 0.13996, pkg: "250ml · R34.99" }
 ];
 
 // ============================================================
@@ -105,14 +105,14 @@ const UNICODE_FRACS = {
   '⅜': 0.375, '⅝': 0.625, '⅞': 0.875,
 };
 const UNIT_NORM = {
-  cup: 'cup', cups: 'cup',
-  tsp: 'tsp', teaspoon: 'tsp', teaspoons: 'tsp',
-  tbsp: 'tbsp', tablespoon: 'tbsp', tablespoons: 'tbsp', tbs: 'tbsp',
+  cup: 'ml', cups: 'ml',
+  tsp: 'ml', teaspoon: 'ml', teaspoons: 'ml',
+  tbsp: 'ml', tablespoon: 'ml', tablespoons: 'ml', tbs: 'ml',
   g: 'g', gram: 'g', grams: 'g', kg: 'g',
   ml: 'ml', milliliter: 'ml', milliliters: 'ml', millilitre: 'ml', millilitres: 'ml',
   l: 'ml', liter: 'ml', liters: 'ml', litre: 'ml', litres: 'ml',
-  slab: 'slab', slabs: 'slab',
-  pack: 'pack', packs: 'pack', packet: 'pack', packets: 'pack',
+  slab: 'each', slabs: 'each',
+  pack: 'each', packs: 'each', packet: 'each', packets: 'each',
   each: 'each', whole: 'each',
 };
 const UNIT_WORDS = new Set(Object.keys(UNIT_NORM));
@@ -151,6 +151,9 @@ function parseIngredientLine(raw) {
     rest = unitM[2];
     if (rawU === 'kg') amount *= 1000;
     if (rawU === 'l' || rawU === 'liter' || rawU === 'liters' || rawU === 'litre' || rawU === 'litres') amount *= 1000;
+    if (rawU === 'cup' || rawU === 'cups') amount *= 240;
+    if (rawU === 'tsp' || rawU === 'teaspoon' || rawU === 'teaspoons') amount *= 5;
+    if (rawU === 'tbsp' || rawU === 'tablespoon' || rawU === 'tablespoons' || rawU === 'tbs') amount *= 15;
   }
 
   const name = rest.replace(/,.*$/, '').replace(/\([^)]*\)/g, '').trim().toLowerCase();
@@ -275,7 +278,7 @@ function initDb() {
     const saved = localStorage.getItem('bakerspro_db');
     if (saved) return JSON.parse(saved);
   } catch { /* ignore */ }
-  return INGREDIENTS_DB.map(item => ({ ...item, dateLastUpdated: '2025-01-01', needsCosting: false }));
+  return INGREDIENTS_DB.map(item => ({ ...item, dateLastUpdated: '2024-01-01', needsCosting: true }));
 }
 
 function initRecipes() {
@@ -478,6 +481,7 @@ export default function BakersCostPro() {
   // ── Community sharing ────────────────────────────────────────
   const [shareOnImport, setShareOnImport] = useState(false);
   const [syncStatus, setSyncStatus]       = useState(null); // null | "syncing" | "synced" | "offline"
+  const [communityDate, setCommunityDate] = useState(null); // lastUpdated from data/ingredients.json
 
   // ── Personal: favourites & collections (localStorage only) ──
   const [favourites, setFavourites]   = useState(() => loadFavourites());
@@ -492,7 +496,7 @@ export default function BakersCostPro() {
   const [reviewQueue, setReviewQueue]       = useState([]);
   const [reviewItem, setReviewItem]         = useState(null);
   const [editingPackage, setEditingPackage] = useState(null); // { name }
-  const [pkgEditVal, setPkgEditVal]         = useState({ packageValue: "", packageUnit: "" });
+  const [pkgEditVal, setPkgEditVal]         = useState({ packageValue: "", packageUnit: "", packagePrice: "" });
 
   // ── GitHub community sync (runs once on mount) ──────────────
   useEffect(() => {
@@ -500,15 +504,20 @@ export default function BakersCostPro() {
     const sync = async () => {
       setSyncStatus("syncing");
       try {
-        const [ghDb, ghRecipes] = await Promise.all([
+        const [ghDbRaw, ghRecipesRaw] = await Promise.all([
           fetchGitHubJson("data/ingredients.json"),
           fetchGitHubJson("data/recipes.json"),
         ]);
         if (cancelled) return;
 
+        // Support both old bare-array format and new { lastUpdated, items } format
+        const ghIngredients = ghDbRaw.items ?? ghDbRaw;
+        const ghRecipeItems = ghRecipesRaw.items ?? ghRecipesRaw;
+        if (ghDbRaw.lastUpdated) setCommunityDate(ghDbRaw.lastUpdated);
+
         // Merge ingredients: local price edit wins when dateLastUpdated is newer
         setDbState(local => {
-          const merged = ghDb.map(ghIng => {
+          const merged = ghIngredients.map(ghIng => {
             const loc = local.find(l => l.name === ghIng.name);
             if (loc && loc.dateLastUpdated > ghIng.dateLastUpdated) return loc;
             return ghIng;
@@ -520,7 +529,7 @@ export default function BakersCostPro() {
         // Merge recipes: add community recipes that aren't in local yet
         setRecipes(local => {
           const localIds = new Set(local.map(r => r.id));
-          const newCommunity = ghRecipes.filter(r => !localIds.has(r.id));
+          const newCommunity = ghRecipeItems.filter(r => !localIds.has(r.id));
           return newCommunity.length ? [...local, ...newCommunity] : local;
         });
 
@@ -614,11 +623,12 @@ export default function BakersCostPro() {
       };
       fetchGitHubJson("data/recipes.json")
         .then(existing => {
-          const already = existing.some(r => r.id === communityRecipe.id);
+          const items = existing.items ?? existing;
+          const already = items.some(r => r.id === communityRecipe.id);
           if (already) return;
           return commitGitHubJson(
             "data/recipes.json",
-            [...existing, communityRecipe],
+            { lastUpdated: todayStr(), items: [...items, communityRecipe] },
             `Add recipe: ${communityRecipe.title}`
           );
         })
@@ -638,7 +648,9 @@ export default function BakersCostPro() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
-      if (!resp.ok) throw new Error(`Could not fetch that URL (HTTP ${resp.status}). The site may block external requests.`);
+      if (resp.status === 404) throw new Error("Fetch function not found (404). Run `netlify dev` locally, or check Netlify deployment.");
+      if (resp.status === 502) throw new Error(`Could not reach that URL. The site may be down or blocking external requests.`);
+      if (!resp.ok) throw new Error(`The recipe site returned HTTP ${resp.status}. It may block external requests.`);
       const html = await resp.text();
 
       const jsonLd = extractJsonLdRecipe(html);
@@ -791,13 +803,15 @@ export default function BakersCostPro() {
 
   // ── Package inline editing ────────────────────────────────────
   const commitPackageEdit = (name) => {
-    const val  = parseFloat(pkgEditVal.packageValue);
-    const unit = pkgEditVal.packageUnit.trim().toLowerCase();
+    const val   = parseFloat(pkgEditVal.packageValue);
+    const unit  = pkgEditVal.packageUnit.trim().toLowerCase();
+    const price = parseFloat(pkgEditVal.packagePrice);
     if (isNaN(val) || val <= 0 || !unit) { setEditingPackage(null); return; }
     const { baseQuantity, baseUnit } = convertToBaseUnits(val, unit);
     const updated = dbState.map(ing => {
       if (ing.name !== name) return ing;
-      const pricePerBaseUnit = ing.latestPrice > 0 && baseQuantity > 0 ? ing.latestPrice / baseQuantity : ing.pricePerBaseUnit;
+      const effectivePrice = price > 0 ? price : (ing.latestPrice ?? 0);
+      const pricePerBaseUnit = effectivePrice > 0 && baseQuantity > 0 ? effectivePrice / baseQuantity : ing.pricePerBaseUnit;
       let costPerUnit = ing.costPerUnit;
       const ingUnit = (ing.unit || "").toLowerCase();
       if (pricePerBaseUnit != null) {
@@ -805,9 +819,12 @@ export default function BakersCostPro() {
         if (baseUnit === "g"     && ingUnit === "kg")   costPerUnit = pricePerBaseUnit * 1000;
         if (baseUnit === "ml"    && ingUnit === "ml")   costPerUnit = pricePerBaseUnit;
         if (baseUnit === "ml"    && ingUnit === "l")    costPerUnit = pricePerBaseUnit * 1000;
-        if (baseUnit === "units" && ingUnit === "each") costPerUnit = ing.latestPrice > 0 ? ing.latestPrice / val : costPerUnit;
+        if (baseUnit === "units" && ingUnit === "each") costPerUnit = effectivePrice > 0 ? effectivePrice / val : costPerUnit;
       }
-      return { ...ing, packageValue: val, packageUnit: unit, baseQuantity, baseUnit, pricePerBaseUnit, costPerUnit, dateLastUpdated: todayStr() };
+      const pkgDisplay = price > 0
+        ? `${val}${unit} · R${price}`
+        : ing.pkg ?? `${val}${unit}`;
+      return { ...ing, packageValue: val, packageUnit: unit, baseQuantity, baseUnit, pricePerBaseUnit, costPerUnit, pkg: pkgDisplay, dateLastUpdated: todayStr(), needsCosting: false };
     });
     setDbState(updated);
     saveDb(updated);
@@ -839,7 +856,7 @@ export default function BakersCostPro() {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ maxItems: 10, startUrl: searchUrl }),
+            body: JSON.stringify({ maxItems: 5, startUrl: searchUrl }),
           }
         );
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -847,14 +864,8 @@ export default function BakersCostPro() {
         if (!Array.isArray(candidates) || candidates.length === 0) continue;
 
         const { best, score, all } = chooseBestCandidate(ing, candidates);
-        if (score >= 0.80) {
-          // High confidence — auto-accept
-          currentDb = currentDb.map(d => d.name === ing.name ? applyMatchedProductToIngredient(d, best, score) : d);
-        } else if (score >= 0.60) {
-          // Medium confidence — queue for manual review
-          toReview.push({ ingredient: ing, all, best, score });
-        }
-        // < 0.60: skip silently — do not overwrite existing data
+        // Always queue for review — show all 5 candidates to user for disambiguation
+        toReview.push({ ingredient: ing, all, best, score });
       } catch (e) {
         errors.push(`"${ing.name}": ${e.message}`);
       }
@@ -871,14 +882,6 @@ export default function BakersCostPro() {
       setReviewQueue(toReview.slice(1));
     }
     setPriceRunning(false);
-
-    // Commit updated prices to GitHub so all users get them on next sync
-    const updatedNames = targets.map(t => t.name).join(", ");
-    commitGitHubJson(
-      "data/ingredients.json",
-      currentDb,
-      `Price update: ${updatedNames} via Checkers`
-    ).catch(e => console.warn("GitHub ingredient commit failed:", e.message));
   };
 
   const advanceReviewQueue = () => {
@@ -893,11 +896,25 @@ export default function BakersCostPro() {
   const acceptReviewProduct = (product) => {
     if (!reviewItem) return;
     const score = reviewItem.all.find(x => x.product === product)?.score ?? reviewItem.score;
-    const updated = dbState.map(d =>
-      d.name === reviewItem.ingredient.name ? applyMatchedProductToIngredient(d, product, score) : d
-    );
+    const updated = dbState.map(d => {
+      if (d.name !== reviewItem.ingredient.name) return d;
+      const applied = applyMatchedProductToIngredient(d, product, score);
+      // Update unit to match packageUnit if they differ (g, ml, each)
+      const newUnit = applied.baseUnit || d.unit;
+      // Format pkg string: "{baseQuantity}{baseUnit} · R{price}"
+      const newPkg = applied.baseQuantity && applied.baseUnit
+        ? `${applied.baseQuantity}${applied.baseUnit} · R${applied.latestPrice?.toFixed(2) ?? product.price}`
+        : d.pkg;
+      return { ...applied, unit: newUnit, pkg: newPkg };
+    });
     setDbState(updated);
     saveDb(updated);
+    // Commit to GitHub immediately
+    commitGitHubJson(
+      "data/ingredients.json",
+      { lastUpdated: todayStr(), items: updated },
+      `Price update: ${reviewItem.ingredient.name} via Checkers`
+    ).catch(e => console.warn("GitHub commit failed:", e.message));
     advanceReviewQueue();
   };
 
@@ -925,7 +942,10 @@ export default function BakersCostPro() {
             <span style={{ fontSize: 11, color: "var(--color-text-secondary)", opacity: 0.7 }}>Syncing…</span>
           )}
           {syncStatus === "synced" && (
-            <Badge label="Community synced" bg={C.successBg} color={C.success} />
+            <Badge
+              label={communityDate ? `Community: ${communityDate}` : "Community synced"}
+              bg={C.successBg} color={C.success}
+            />
           )}
           {syncStatus === "offline" && (
             <Badge label="Offline mode" bg={C.amberBg} color={C.amber} />
@@ -939,19 +959,15 @@ export default function BakersCostPro() {
             { id: "db",     label: needsCostingCount > 0 ? `Ingredients DB (${needsCostingCount})` : "Ingredients DB" },
             { id: "cost",   label: "Costing" },
             { id: "book",   label: recipes.length > 0 ? `Recipe Book (${recipes.length})` : "Recipe Book" },
-            { id: "prices", label: "Live Prices" },
           ].map(t => {
             const active = tab === t.id;
-            const isComingSoon = t.id === "prices";
             return (
               <button key={t.id} onClick={() => setTab(t.id)} style={{
                 padding: "10px 18px", fontSize: 13,
-                fontWeight: active && !isComingSoon ? 500 : 400,
-                color: isComingSoon ? "var(--color-text-secondary)"
-                  : active ? C.amber : "var(--color-text-secondary)",
-                opacity: isComingSoon ? 0.5 : 1,
+                fontWeight: active ? 500 : 400,
+                color: active ? C.amber : "var(--color-text-secondary)",
                 background: "none", border: "none",
-                borderBottom: active && !isComingSoon ? `2px solid ${C.amber}` : "2px solid transparent",
+                borderBottom: active ? `2px solid ${C.amber}` : "2px solid transparent",
                 cursor: "pointer", transition: "color 0.15s", whiteSpace: "nowrap",
               }}>{t.label}</button>
             );
@@ -1142,6 +1158,22 @@ export default function BakersCostPro() {
                     : `Done — ${priceProgress.total} ingredient${priceProgress.total !== 1 ? "s" : ""} processed`}
                 </span>
               )}
+              <button
+                onClick={() => {
+                  commitGitHubJson(
+                    "data/ingredients.json",
+                    { lastUpdated: todayStr(), items: dbState },
+                    "Manual ingredient sync"
+                  ).then(() => setErr("Synced to GitHub")).catch(e => setErr(`GitHub sync failed: ${e.message}`));
+                }}
+                style={{
+                  padding: "6px 12px", fontSize: 11, borderRadius: 6, fontWeight: 500,
+                  background: "var(--color-background-secondary)", color: "var(--color-text-secondary)",
+                  border: "0.5px solid var(--color-border-secondary)",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >Push to GitHub</button>
             </div>
 
             {/* SEARCH + BADGE */}
@@ -1266,52 +1298,60 @@ export default function BakersCostPro() {
                           </div>
                         </td>
                         <td style={{ padding: "8px 0 8px 10px", color: "var(--color-text-secondary)", fontSize: 12 }}>
-                          {ing.matchedProductName ? (
-                            editingPkg ? (
-                              /* Inline package editor — shown after a Checkers match */
-                              <span style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                                <input
-                                  type="number" min="0" step="any" autoFocus
-                                  value={pkgEditVal.packageValue}
-                                  onChange={e => setPkgEditVal(v => ({ ...v, packageValue: e.target.value }))}
-                                  onKeyDown={e => {
-                                    if (e.key === "Enter") commitPackageEdit(ing.name);
-                                    if (e.key === "Escape") setEditingPackage(null);
-                                  }}
-                                  style={{ width: 60, fontSize: 12, padding: "2px 4px", borderRadius: 4 }}
-                                />
-                                <input
-                                  type="text"
-                                  value={pkgEditVal.packageUnit}
-                                  onChange={e => setPkgEditVal(v => ({ ...v, packageUnit: e.target.value }))}
-                                  onBlur={() => commitPackageEdit(ing.name)}
-                                  onKeyDown={e => {
-                                    if (e.key === "Enter") commitPackageEdit(ing.name);
-                                    if (e.key === "Escape") setEditingPackage(null);
-                                  }}
-                                  placeholder="g/ml/units"
-                                  style={{ width: 52, fontSize: 12, padding: "2px 4px", borderRadius: 4 }}
-                                />
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setEditingPackage({ name: ing.name });
-                                  setPkgEditVal({ packageValue: String(ing.packageValue ?? ""), packageUnit: ing.packageUnit ?? "" });
+                          {editingPkg ? (
+                            /* Inline package editor — qty · unit · price */
+                            <span style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                              <input
+                                type="number" min="0" step="any" autoFocus
+                                value={pkgEditVal.packageValue}
+                                onChange={e => setPkgEditVal(v => ({ ...v, packageValue: e.target.value }))}
+                                onKeyDown={e => {
+                                  if (e.key === "Enter") commitPackageEdit(ing.name);
+                                  if (e.key === "Escape") setEditingPackage(null);
                                 }}
-                                title="Click to edit package info"
-                                style={{
-                                  background: "none", border: "none", cursor: "pointer",
-                                  color: C.amber, fontSize: 12, padding: "2px 4px", borderRadius: 4,
-                                  textDecoration: "underline dotted", textAlign: "left",
+                                placeholder="qty"
+                                style={{ width: 52, fontSize: 12, padding: "2px 4px", borderRadius: 4 }}
+                              />
+                              <input
+                                type="text"
+                                value={pkgEditVal.packageUnit}
+                                onChange={e => setPkgEditVal(v => ({ ...v, packageUnit: e.target.value }))}
+                                onKeyDown={e => {
+                                  if (e.key === "Enter") commitPackageEdit(ing.name);
+                                  if (e.key === "Escape") setEditingPackage(null);
                                 }}
-                              >
-                                {ing.packageValue != null ? `${ing.packageValue}${ing.packageUnit}` : "—"}
-                                {ing.pricePerBaseUnit != null ? ` · R${ing.pricePerBaseUnit.toFixed(4)}/${ing.baseUnit}` : ""}
-                              </button>
-                            )
+                                placeholder="g/ml"
+                                style={{ width: 44, fontSize: 12, padding: "2px 4px", borderRadius: 4 }}
+                              />
+                              <input
+                                type="number" min="0" step="any"
+                                value={pkgEditVal.packagePrice}
+                                onChange={e => setPkgEditVal(v => ({ ...v, packagePrice: e.target.value }))}
+                                onBlur={() => commitPackageEdit(ing.name)}
+                                onKeyDown={e => {
+                                  if (e.key === "Enter") commitPackageEdit(ing.name);
+                                  if (e.key === "Escape") setEditingPackage(null);
+                                }}
+                                placeholder="R"
+                                style={{ width: 48, fontSize: 12, padding: "2px 4px", borderRadius: 4 }}
+                              />
+                            </span>
                           ) : (
-                            ing.pkg
+                            <button
+                              onClick={() => {
+                                setEditingPackage({ name: ing.name });
+                                setPkgEditVal({ packageValue: String(ing.packageValue ?? ""), packageUnit: ing.packageUnit ?? "", packagePrice: "" });
+                              }}
+                              title="Click to edit package info"
+                              style={{
+                                background: "none", border: "none", cursor: "pointer",
+                                color: C.amber, fontSize: 12, padding: "2px 4px", borderRadius: 4,
+                                textDecoration: "underline dotted", textAlign: "left",
+                              }}
+                            >
+                              {ing.packageValue != null ? `${ing.packageValue}${ing.packageUnit}` : (ing.pkg ?? "—")}
+                              {ing.pricePerBaseUnit != null ? ` · R${ing.pricePerBaseUnit.toFixed(4)}/${ing.baseUnit}` : ""}
+                            </button>
                           )}
                         </td>
                       </tr>
@@ -1801,18 +1841,6 @@ export default function BakersCostPro() {
           </div>
         )}
 
-        {/* ══ LIVE PRICES TAB — COMING SOON ════════════════════ */}
-        {tab === "prices" && (
-          <div style={{ textAlign: "center", padding: "5rem 2rem" }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
-            <p style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 500, color: "var(--color-text-primary)" }}>
-              Coming Soon
-            </p>
-            <p style={{ margin: 0, fontSize: 14, color: "var(--color-text-secondary)", maxWidth: 340, marginInline: "auto", lineHeight: 1.7 }}>
-              Live SA grocery price lookup will be available in a future update.
-            </p>
-          </div>
-        )}
 
       </div>{/* end CONTENT */}
 
@@ -1903,7 +1931,7 @@ export default function BakersCostPro() {
                 background: "none", color: "var(--color-text-secondary)",
                 borderRadius: 8, cursor: "pointer",
               }}
-            >Skip this ingredient</button>
+            >Skip — none of these are appropriate</button>
           </div>
         </div>
       )}
