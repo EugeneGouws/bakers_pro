@@ -1,18 +1,19 @@
 # Baker's Cost Pro — SA Edition
 
-A browser-only recipe costing tool for South African bakers. No backend, no subscriptions, no paid APIs.
+A recipe costing tool for South African bakers. Community data is shared via GitHub; personal data stays on your device. No subscriptions, no paid APIs.
 
 ## Features
 
 - **Recipe import** — paste a URL (JSON-LD recipe sites) or upload `.txt`, `.md`, `.docx`, `.pdf`, `.xlsx`
-- **Ingredient DB** — 78 ZAR-priced ingredients; click any price to edit inline; tracks last-updated date and costing status
+- **Ingredient DB** — 57 ZAR-priced ingredients; click any price to edit inline; bulk price update via Apify/Checkers; tracks last-updated date and costing status
 - **Costing** — per-ingredient breakdown with 15% overhead + R16 packaging; sell-price suggestions at 2×, 2.5×, 3×
-- **Recipe Book** — numbered list of all saved recipes with live cost price; inline edit of title and quantities
-- **Persistence** — ingredient prices and recipe history saved to localStorage; 14 recipes pre-loaded from Cake Costings.xlsx
+- **Recipe Book** — numbered list of all recipes with live cost price; ★ favourites; named collections; inline edit of title and quantities
+- **Community sync** — on load, fetches shared ingredient prices and community recipes from GitHub; "Community synced" badge confirms live data
+- **Share with community** — optional toggle on import; shared recipes are committed to the GitHub repo for all users
 
 ## Stack
 
-React 19 · Vite 8 · mammoth (docx) · unpdf (pdf) · xlsx
+React 19 · Vite 8 · mammoth (docx) · unpdf (pdf) · xlsx · Netlify Functions
 
 ## Dev
 
@@ -23,7 +24,38 @@ npm run build
 npm run lint
 ```
 
+## Environment variables
+
+Create a `.env` file (see `.env.example`):
+
+```
+VITE_APIFY_KEY=        # Apify API key for Checkers price scraping
+VITE_GITHUB_REPO=EugeneGouws/bakers_pro
+VITE_GITHUB_BRANCH=main
+```
+
+## Deploying (Netlify)
+
+Set these in **Netlify → Site settings → Environment variables**:
+
+| Variable | Purpose |
+|---|---|
+| `VITE_APIFY_KEY` | Apify key |
+| `VITE_GITHUB_REPO` | `owner/repo` |
+| `VITE_GITHUB_BRANCH` | branch (e.g. `main`) |
+| `VITE_GITHUB_TOKEN` | GitHub PAT with `Contents: write` — used server-side by the Netlify function only |
+
+## Data model
+
+| Layer | Storage | Contents |
+|---|---|---|
+| Community | GitHub `data/ingredients.json` | Shared ingredient prices |
+| Community | GitHub `data/recipes.json` | Shared recipe collection |
+| Personal | localStorage `bakerspro_db` | Personal price overrides |
+| Personal | localStorage `bakerspro_recipes` | Private (non-shared) recipes |
+| Personal | localStorage `bakerspro_favourites` | Starred recipe IDs |
+| Personal | localStorage `bakerspro_collections` | Named recipe sets |
+
 ## First load
 
-On first open the app seeds 14 recipes from `src/data/recipes.json` into localStorage.
-To reset to defaults: `localStorage.clear()` in the browser console, then reload.
+On first open the app seeds from `src/data/recipes.json`, then silently merges community data from GitHub. To reset personal data: `localStorage.clear()` in the browser console, then reload.

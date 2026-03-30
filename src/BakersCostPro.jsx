@@ -10,8 +10,10 @@
 //   - Use react-native-safe-area-context for safe areas
 // ============================================================
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import seedRecipes from "./data/recipes.json";
+import { fetchGitHubJson, commitGitHubJson } from "./lib/github.js";
+import { loadFavourites, saveFavourites, loadCollections, saveCollections } from "./lib/storage.js";
 
 // ============================================================
 // INGREDIENT DATABASE  (source: Cake_Costings.xlsx)
@@ -296,6 +298,153 @@ function saveRecipes(recipes) {
 }
 
 // ============================================================
+// PRICE UPDATE HELPERS  (Apify / Checkers integration)
+// ============================================================
+
+function normalizeIngredientName(str) {
+  return (str || "")
+    .toLowerCase().trim()
+    .replace(/\bkilograms?\b/g, "kg").replace(/\bgrams?\b/g, "g")
+    .replace(/\blitres?\b|\bliters?\b/g, "l")
+    .replace(/\bmillilitres?\b|\bmilliliters?\b/g, "ml")
+    .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function normalizeProductName(str) {
+  return (str || "")
+    .toLowerCase().trim()
+    .replace(/\bcheckers\b|\bspar\b|\bpnp\b|\bpick n pay\b|\bwoolworths\b|\bshoprite\b/g, "")
+    .replace(/\bper\s+(?:kg|g|ml|l|unit)\b/g, "")
+    .replace(/\bkilograms?\b/g, "kg").replace(/\bgrams?\b/g, "g")
+    .replace(/\blitres?\b|\bliters?\b/g, "l")
+    .replace(/\bmillilitres?\b|\bmilliliters?\b/g, "ml")
+    .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+// Extract structured package size from a product title string
+function parsePackageInfo(str) {
+  const s = str || "";
+  // Multi-pack: "6 x 1L", "6x500ml"
+  const multiM = s.match(/(\d+)\s*[xX×]\s*(\d+(?:\.\d+)?)\s*(kg|g|ml|l)\b/i);
+  if (multiM) {
+    return {
+      packageValue: parseFloat(multiM[1]) * parseFloat(multiM[2]),
+      packageUnit: multiM[3].toLowerCase(),
+      rawMatchedPackageText: multiM[0],
+    };
+  }
+  // Count pack: "18s", "12 eggs", "6 rolls"
+  const countM = s.match(/(\d+)\s*(?:s\b|units?\b|eggs?\b|rolls?\b|slices?\b|pcs?\b|pieces?\b)/i);
+  if (countM) {
+    return { packageValue: parseFloat(countM[1]), packageUnit: "units", rawMatchedPackageText: countM[0] };
+  }
+  // Standard weight/volume: "2.5kg", "500g", "1L", "750ml"
+  const stdM = s.match(/(\d+(?:\.\d+)?)\s*(kg|g|ml|l)\b/i);
+  if (stdM) {
+    return { packageValue: parseFloat(stdM[1]), packageUnit: stdM[2].toLowerCase(), rawMatchedPackageText: stdM[0] };
+  }
+  // Loose/each/bunch produce
+  const looseM = s.match(/\b(loose|each|bunch)\b/i);
+  if (looseM) {
+    return { packageValue: 1, packageUnit: "units", rawMatchedPackageText: looseM[0] };
+  }
+  return { packageValue: null, packageUnit: null, rawMatchedPackageText: null };
+}
+
+// Convert package to base units: kg→g, l→ml, count stays units
+function convertToBaseUnits(packageValue, packageUnit) {
+  if (packageValue == null || packageUnit == null) return { baseQuantity: null, baseUnit: null };
+  const u = packageUnit.toLowerCase();
+  if (u === "kg") return { baseQuantity: packageValue * 1000, baseUnit: "g" };
+  if (u === "g")  return { baseQuantity: packageValue, baseUnit: "g" };
+  if (u === "l")  return { baseQuantity: packageValue * 1000, baseUnit: "ml" };
+  if (u === "ml") return { baseQuantity: packageValue, baseUnit: "ml" };
+  return { baseQuantity: packageValue, baseUnit: "units" };
+}
+
+// Score a single Checkers product candidate against an ingredient (returns 0–1)
+function scoreCandidate(ingredient, product) {
+  const ingNorm  = normalizeIngredientName(ingredient.name);
+  const prodNorm = normalizeProductName(product.name || product.title || "");
+  const ingTokens  = ingNorm.split(" ").filter(Boolean);
+  const prodTokens = new Set(prodNorm.split(" ").filter(Boolean));
+
+  // 50%: Jaccard token overlap + bonus if product title starts with the ingredient tokens in order
+  const overlap   = ingTokens.filter(t => prodTokens.has(t)).length;
+  const unionSize = new Set([...ingTokens, ...prodTokens]).size;
+  let nameSim = unionSize > 0 ? overlap / unionSize : 0;
+  const prodWords = prodNorm.split(" ");
+  if (ingTokens.length > 0 && ingTokens.every((t, i) => prodWords[i] === t)) nameSim = Math.min(1, nameSim + 0.15);
+
+  // 20%: unit/package family match (mass/volume/count)
+  const { packageUnit } = parsePackageInfo(product.name || product.title || "");
+  const { baseUnit } = convertToBaseUnits(1, packageUnit);
+  const ingUnit   = (ingredient.unit || "").toLowerCase();
+  const ingFamily = ["g", "kg"].includes(ingUnit) ? "mass" : ["ml", "l"].includes(ingUnit) ? "volume" : ["each", "units"].includes(ingUnit) ? "count" : "unknown";
+  const prodFamily = baseUnit === "g" ? "mass" : baseUnit === "ml" ? "volume" : baseUnit === "units" ? "count" : "unknown";
+  const unitScore  = ingFamily === "unknown" || prodFamily === "unknown" ? 0.5 : ingFamily === prodFamily ? 1.0 : 0.0;
+
+  // 15%: penalise processed/irrelevant product categories
+  const IRRELEVANT = ["yoghurt", "yogurt", "muffin", "chips", "baby", "drink", "juice", "sauce", "spread", "flavoured", "flavored", "ice cream", "smoothie", "milkshake", "snack", "candy", "sweets", "pudding"];
+  const catScore = IRRELEVANT.some(kw => prodNorm.includes(kw)) ? 0.0 : 1.0;
+
+  // 15%: brand match (neutral 0.5 when ingredient has no brand preference)
+  const BRANDS = ["cadbury", "ina paarman", "snowflake", "selati", "huletts", "lancewood", "clover", "sasko", "tastic", "rama"];
+  const ingBrand  = BRANDS.find(b => ingNorm.includes(b));
+  const prodBrand = BRANDS.find(b => prodNorm.includes(b));
+  const brandScore = !ingBrand ? 0.5 : ingBrand === prodBrand ? 1.0 : 0.1;
+
+  return (nameSim * 0.50) + (unitScore * 0.20) + (catScore * 0.15) + (brandScore * 0.15);
+}
+
+// Returns { best, score, all } — all is sorted descending by score
+function chooseBestCandidate(ingredient, candidates) {
+  const scored = candidates
+    .map(p => ({ product: p, score: scoreCandidate(ingredient, p) }))
+    .sort((a, b) => b.score - a.score);
+  return { best: scored[0]?.product ?? null, score: scored[0]?.score ?? 0, all: scored };
+}
+
+// Merge matched Checkers product data onto an ingredient record
+function applyMatchedProductToIngredient(ingredient, product, score) {
+  const titleStr = product.name || product.title || "";
+  const priceRaw = product.price ?? product.currentPrice ?? product.pricePerUnit ?? null;
+  const price    = typeof priceRaw === "string" ? parseFloat(priceRaw.replace(/[^0-9.]/g, "")) : Number(priceRaw ?? 0);
+  const { packageValue, packageUnit, rawMatchedPackageText } = parsePackageInfo(titleStr);
+  const { baseQuantity, baseUnit } = convertToBaseUnits(packageValue, packageUnit);
+  const pricePerBaseUnit = price > 0 && baseQuantity > 0 ? price / baseQuantity : null;
+
+  // Update costPerUnit where a direct base-unit conversion exists.
+  // cup/tsp/tbsp/slab/pack have no universal gram equivalent — preserve existing value.
+  let costPerUnit = ingredient.costPerUnit;
+  const ingUnit = (ingredient.unit || "").toLowerCase();
+  if (pricePerBaseUnit != null) {
+    if (baseUnit === "g"     && ingUnit === "g")    costPerUnit = pricePerBaseUnit;
+    if (baseUnit === "g"     && ingUnit === "kg")   costPerUnit = pricePerBaseUnit * 1000;
+    if (baseUnit === "ml"    && ingUnit === "ml")   costPerUnit = pricePerBaseUnit;
+    if (baseUnit === "ml"    && ingUnit === "l")    costPerUnit = pricePerBaseUnit * 1000;
+    if (baseUnit === "units" && ingUnit === "each") costPerUnit = price > 0 ? price / (packageValue || 1) : costPerUnit;
+  }
+
+  return {
+    ...ingredient,
+    costPerUnit,
+    needsCosting: false,
+    dateLastUpdated: todayStr(),
+    matchedProductName: titleStr,
+    retailer: "checkers",
+    latestPrice: price,
+    packageValue,
+    packageUnit,
+    baseQuantity,
+    baseUnit,
+    pricePerBaseUnit,
+    matchConfidence: score,
+    rawMatchedPackageText,
+  };
+}
+
+// ============================================================
 // MAIN COMPONENT
 // ============================================================
 export default function BakersCostPro() {
@@ -325,6 +474,64 @@ export default function BakersCostPro() {
   // ── Misc ────────────────────────────────────────────────────
   const [err, setErr]             = useState(null);
   const fileRef                   = useRef(null);
+
+  // ── Community sharing ────────────────────────────────────────
+  const [shareOnImport, setShareOnImport] = useState(false);
+  const [syncStatus, setSyncStatus]       = useState(null); // null | "syncing" | "synced" | "offline"
+
+  // ── Personal: favourites & collections (localStorage only) ──
+  const [favourites, setFavourites]   = useState(() => loadFavourites());
+  const [collections, setCollections] = useState(() => loadCollections());
+  const [collectionMenu, setCollectionMenu] = useState(null); // recipe id whose menu is open
+  const [newColName, setNewColName]   = useState("");
+
+  // ── Price update ─────────────────────────────────────────────
+  const [selectedIngredients, setSelectedIngredients] = useState(new Set());
+  const [priceRunning, setPriceRunning]     = useState(false);
+  const [priceProgress, setPriceProgress]   = useState(null); // { done, total, current }
+  const [reviewQueue, setReviewQueue]       = useState([]);
+  const [reviewItem, setReviewItem]         = useState(null);
+  const [editingPackage, setEditingPackage] = useState(null); // { name }
+  const [pkgEditVal, setPkgEditVal]         = useState({ packageValue: "", packageUnit: "" });
+
+  // ── GitHub community sync (runs once on mount) ──────────────
+  useEffect(() => {
+    let cancelled = false;
+    const sync = async () => {
+      setSyncStatus("syncing");
+      try {
+        const [ghDb, ghRecipes] = await Promise.all([
+          fetchGitHubJson("data/ingredients.json"),
+          fetchGitHubJson("data/recipes.json"),
+        ]);
+        if (cancelled) return;
+
+        // Merge ingredients: local price edit wins when dateLastUpdated is newer
+        setDbState(local => {
+          const merged = ghDb.map(ghIng => {
+            const loc = local.find(l => l.name === ghIng.name);
+            if (loc && loc.dateLastUpdated > ghIng.dateLastUpdated) return loc;
+            return ghIng;
+          });
+          const localOnly = local.filter(l => !merged.find(m => m.name === l.name));
+          return [...merged, ...localOnly];
+        });
+
+        // Merge recipes: add community recipes that aren't in local yet
+        setRecipes(local => {
+          const localIds = new Set(local.map(r => r.id));
+          const newCommunity = ghRecipes.filter(r => !localIds.has(r.id));
+          return newCommunity.length ? [...local, ...newCommunity] : local;
+        });
+
+        setSyncStatus("synced");
+      } catch {
+        setSyncStatus("offline"); // silent — app works from local data
+      }
+    };
+    sync();
+    return () => { cancelled = true; };
+  }, []);
 
   // ── Derived ─────────────────────────────────────────────────
   const recipe = recipes.find(r => r.id === activeRecipeId) || null;
@@ -396,6 +603,27 @@ export default function BakersCostPro() {
     saveRecipes(updated);
     setActiveRecipeId(newRecipe.id);
     setTab('cost');
+
+    // Optionally push to community GitHub repo
+    if (shareOnImport) {
+      const communityRecipe = {
+        ...newRecipe,
+        contributor: "anonymous",
+        dateAdded: todayStr(),
+        tags: [],
+      };
+      fetchGitHubJson("data/recipes.json")
+        .then(existing => {
+          const already = existing.some(r => r.id === communityRecipe.id);
+          if (already) return;
+          return commitGitHubJson(
+            "data/recipes.json",
+            [...existing, communityRecipe],
+            `Add recipe: ${communityRecipe.title}`
+          );
+        })
+        .catch(e => console.warn("GitHub recipe share failed:", e.message));
+    }
   };
 
   // ── URL import ──────────────────────────────────────────────
@@ -405,8 +633,11 @@ export default function BakersCostPro() {
     setImporting(true);
     setErr(null);
     try {
-      const proxy = `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
-      const resp = await fetch(proxy);
+      const resp = await fetch("/.netlify/functions/fetch-recipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
       if (!resp.ok) throw new Error(`Could not fetch that URL (HTTP ${resp.status}). The site may block external requests.`);
       const html = await resp.text();
 
@@ -515,6 +746,35 @@ export default function BakersCostPro() {
       setActiveRecipeId(updated.length ? updated[updated.length - 1].id : null);
   };
 
+  // ── Favourites ───────────────────────────────────────────────
+  const toggleFavourite = (id) => {
+    const next = favourites.includes(id)
+      ? favourites.filter(f => f !== id)
+      : [...favourites, id];
+    setFavourites(next);
+    saveFavourites(next);
+  };
+
+  // ── Collections ──────────────────────────────────────────────
+  const addToCollection = (recipeId, colName) => {
+    const col = collections[colName] || [];
+    if (col.includes(recipeId)) return;
+    const next = { ...collections, [colName]: [...col, recipeId] };
+    setCollections(next);
+    saveCollections(next);
+    setCollectionMenu(null);
+    setNewColName("");
+  };
+
+  const removeFromCollection = (recipeId, colName) => {
+    const col = (collections[colName] || []).filter(id => id !== recipeId);
+    const next = col.length
+      ? { ...collections, [colName]: col }
+      : Object.fromEntries(Object.entries(collections).filter(([k]) => k !== colName));
+    setCollections(next);
+    saveCollections(next);
+  };
+
   // ── DB inline editing ────────────────────────────────────────
   const commitEdit = (name) => {
     const val = parseFloat(editValue);
@@ -527,6 +787,118 @@ export default function BakersCostPro() {
     setDbState(updated);
     saveDb(updated);
     setEditingCell(null);
+  };
+
+  // ── Package inline editing ────────────────────────────────────
+  const commitPackageEdit = (name) => {
+    const val  = parseFloat(pkgEditVal.packageValue);
+    const unit = pkgEditVal.packageUnit.trim().toLowerCase();
+    if (isNaN(val) || val <= 0 || !unit) { setEditingPackage(null); return; }
+    const { baseQuantity, baseUnit } = convertToBaseUnits(val, unit);
+    const updated = dbState.map(ing => {
+      if (ing.name !== name) return ing;
+      const pricePerBaseUnit = ing.latestPrice > 0 && baseQuantity > 0 ? ing.latestPrice / baseQuantity : ing.pricePerBaseUnit;
+      let costPerUnit = ing.costPerUnit;
+      const ingUnit = (ing.unit || "").toLowerCase();
+      if (pricePerBaseUnit != null) {
+        if (baseUnit === "g"     && ingUnit === "g")    costPerUnit = pricePerBaseUnit;
+        if (baseUnit === "g"     && ingUnit === "kg")   costPerUnit = pricePerBaseUnit * 1000;
+        if (baseUnit === "ml"    && ingUnit === "ml")   costPerUnit = pricePerBaseUnit;
+        if (baseUnit === "ml"    && ingUnit === "l")    costPerUnit = pricePerBaseUnit * 1000;
+        if (baseUnit === "units" && ingUnit === "each") costPerUnit = ing.latestPrice > 0 ? ing.latestPrice / val : costPerUnit;
+      }
+      return { ...ing, packageValue: val, packageUnit: unit, baseQuantity, baseUnit, pricePerBaseUnit, costPerUnit, dateLastUpdated: todayStr() };
+    });
+    setDbState(updated);
+    saveDb(updated);
+    setEditingPackage(null);
+  };
+
+  // ── Apify / Checkers bulk price update ───────────────────────
+  const runPriceUpdate = async () => {
+    if (priceRunning || selectedIngredients.size === 0) return;
+    const apiKey = import.meta.env.VITE_APIFY_KEY;
+    if (!apiKey) { setErr("Apify API key not set. Add VITE_APIFY_KEY to your .env file."); return; }
+
+    setPriceRunning(true);
+    setErr(null);
+    const targets = dbState.filter(ing => selectedIngredients.has(ing.name));
+    setPriceProgress({ done: 0, total: targets.length, current: targets[0]?.name ?? "" });
+
+    let currentDb = [...dbState];
+    const toReview = [];
+    const errors   = [];
+
+    for (let i = 0; i < targets.length; i++) {
+      const ing = currentDb.find(d => d.name === targets[i].name) ?? targets[i];
+      setPriceProgress({ done: i, total: targets.length, current: ing.name });
+      try {
+        const searchUrl = `https://www.checkers.co.za/search?Search=${encodeURIComponent(ing.name)}`;
+        const resp = await fetch(
+          `https://api.apify.com/v2/acts/tXYgrsQcGx4ReKqdW/run-sync-get-dataset-items?token=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ maxItems: 10, startUrl: searchUrl }),
+          }
+        );
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const candidates = await resp.json();
+        if (!Array.isArray(candidates) || candidates.length === 0) continue;
+
+        const { best, score, all } = chooseBestCandidate(ing, candidates);
+        if (score >= 0.80) {
+          // High confidence — auto-accept
+          currentDb = currentDb.map(d => d.name === ing.name ? applyMatchedProductToIngredient(d, best, score) : d);
+        } else if (score >= 0.60) {
+          // Medium confidence — queue for manual review
+          toReview.push({ ingredient: ing, all, best, score });
+        }
+        // < 0.60: skip silently — do not overwrite existing data
+      } catch (e) {
+        errors.push(`"${ing.name}": ${e.message}`);
+      }
+    }
+
+    setDbState(currentDb);
+    saveDb(currentDb);
+    setSelectedIngredients(new Set());
+    setPriceProgress({ done: targets.length, total: targets.length, current: "" });
+    if (errors.length > 0) setErr(`Price update errors — ${errors.join("; ")}`);
+
+    if (toReview.length > 0) {
+      setReviewItem(toReview[0]);
+      setReviewQueue(toReview.slice(1));
+    }
+    setPriceRunning(false);
+
+    // Commit updated prices to GitHub so all users get them on next sync
+    const updatedNames = targets.map(t => t.name).join(", ");
+    commitGitHubJson(
+      "data/ingredients.json",
+      currentDb,
+      `Price update: ${updatedNames} via Checkers`
+    ).catch(e => console.warn("GitHub ingredient commit failed:", e.message));
+  };
+
+  const advanceReviewQueue = () => {
+    if (reviewQueue.length > 0) {
+      setReviewItem(reviewQueue[0]);
+      setReviewQueue(reviewQueue.slice(1));
+    } else {
+      setReviewItem(null);
+    }
+  };
+
+  const acceptReviewProduct = (product) => {
+    if (!reviewItem) return;
+    const score = reviewItem.all.find(x => x.product === product)?.score ?? reviewItem.score;
+    const updated = dbState.map(d =>
+      d.name === reviewItem.ingredient.name ? applyMatchedProductToIngredient(d, product, score) : d
+    );
+    setDbState(updated);
+    saveDb(updated);
+    advanceReviewQueue();
   };
 
   // ── RENDER ───────────────────────────────────────────────────
@@ -545,9 +917,20 @@ export default function BakersCostPro() {
           </h1>
           <Badge label="SA Edition" bg={C.amberBg} color={C.amber} />
         </div>
-        <p style={{ margin: "0 0 1rem 44px", fontSize: 13, color: "var(--color-text-secondary)" }}>
-          Recipe import · Ingredient costing · SA pricing
-        </p>
+        <div style={{ margin: "0 0 1rem 44px", display: "flex", alignItems: "center", gap: 12 }}>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-secondary)" }}>
+            Recipe import · Ingredient costing · SA pricing
+          </p>
+          {syncStatus === "syncing" && (
+            <span style={{ fontSize: 11, color: "var(--color-text-secondary)", opacity: 0.7 }}>Syncing…</span>
+          )}
+          {syncStatus === "synced" && (
+            <Badge label="Community synced" bg={C.successBg} color={C.success} />
+          )}
+          {syncStatus === "offline" && (
+            <Badge label="Offline mode" bg={C.amberBg} color={C.amber} />
+          )}
+        </div>
 
         {/* TAB BAR */}
         <div style={{ display: "flex", marginBottom: -1 }}>
@@ -680,6 +1063,31 @@ export default function BakersCostPro() {
               </div>
             )}
 
+            {/* COMMUNITY SHARE TOGGLE */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 12,
+              padding: "12px 16px", borderRadius: 8, marginBottom: 20,
+              background: shareOnImport ? C.successBg : "var(--color-background-secondary)",
+              border: `0.5px solid ${shareOnImport ? "#B2D98A" : "var(--color-border-tertiary)"}`,
+            }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flex: 1 }}>
+                <input
+                  type="checkbox"
+                  checked={shareOnImport}
+                  onChange={e => setShareOnImport(e.target.checked)}
+                  style={{ width: 16, height: 16, cursor: "pointer", accentColor: C.success }}
+                />
+                <span style={{ fontSize: 13, fontWeight: 500, color: "var(--color-text-primary)" }}>
+                  Share with community
+                </span>
+              </label>
+              <span style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
+                {shareOnImport
+                  ? "Recipe will be added to the community recipe book"
+                  : "Recipe stays on this device only"}
+              </span>
+            </div>
+
             {/* HOW IT WORKS */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
               {[
@@ -709,6 +1117,34 @@ export default function BakersCostPro() {
         {/* ══ INGREDIENTS DB TAB ═══════════════════════════════ */}
         {tab === "db" && (
           <div>
+            {/* PRICE UPDATE TOOLBAR */}
+            <div style={{ display: "flex", gap: 10, marginBottom: 12, alignItems: "center", flexWrap: "wrap" }}>
+              <button
+                onClick={runPriceUpdate}
+                disabled={priceRunning || selectedIngredients.size === 0}
+                style={{
+                  padding: "8px 18px", fontSize: 13, borderRadius: 8, fontWeight: 500,
+                  background: priceRunning || selectedIngredients.size === 0 ? "var(--color-background-secondary)" : C.amber,
+                  color: priceRunning || selectedIngredients.size === 0 ? "var(--color-text-secondary)" : "#fff",
+                  border: "none",
+                  cursor: priceRunning || selectedIngredients.size === 0 ? "not-allowed" : "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {priceRunning
+                  ? "Updating…"
+                  : `Update selected prices${selectedIngredients.size > 0 ? ` (${selectedIngredients.size})` : ""}`}
+              </button>
+              {priceProgress && (
+                <span style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
+                  {priceProgress.done < priceProgress.total
+                    ? `${priceProgress.done} / ${priceProgress.total} — checking "${priceProgress.current}"…`
+                    : `Done — ${priceProgress.total} ingredient${priceProgress.total !== 1 ? "s" : ""} processed`}
+                </span>
+              )}
+            </div>
+
+            {/* SEARCH + BADGE */}
             <div style={{ display: "flex", gap: 10, marginBottom: 16, alignItems: "center" }}>
               <input
                 type="text"
@@ -726,9 +1162,28 @@ export default function BakersCostPro() {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr style={{ borderBottom: "0.5px solid var(--color-border-tertiary)" }}>
+                    {/* Select-all checkbox */}
+                    <th style={{ padding: "8px 10px 8px 0", width: 32 }}>
+                      <input
+                        type="checkbox"
+                        checked={filteredDb.length > 0 && filteredDb.every(i => selectedIngredients.has(i.name))}
+                        ref={el => {
+                          if (el) el.indeterminate =
+                            filteredDb.some(i => selectedIngredients.has(i.name)) &&
+                            !filteredDb.every(i => selectedIngredients.has(i.name));
+                        }}
+                        onChange={() => {
+                          const allChecked = filteredDb.every(i => selectedIngredients.has(i.name));
+                          const next = new Set(selectedIngredients);
+                          filteredDb.forEach(i => allChecked ? next.delete(i.name) : next.add(i.name));
+                          setSelectedIngredients(next);
+                        }}
+                        style={{ cursor: "pointer" }}
+                      />
+                    </th>
                     {["Ingredient", "Unit", "R / unit", "Last updated", "Status", "Package"].map((h, i) => (
                       <th key={h} style={{
-                        textAlign: i >= 2 && i <= 3 ? "center" : i >= 4 ? "left" : "left",
+                        textAlign: i >= 2 && i <= 3 ? "center" : "left",
                         padding: "8px 10px 8px 0", fontWeight: 500, color: "var(--color-text-secondary)",
                         whiteSpace: "nowrap",
                       }}>{h}</th>
@@ -737,11 +1192,29 @@ export default function BakersCostPro() {
                 </thead>
                 <tbody>
                   {filteredDb.map((ing) => {
-                    const editing = editingCell?.name === ing.name;
-                    const needsCost = ing.needsCosting || ing.costPerUnit === 0;
-                    const outdated  = isOutdated(ing.dateLastUpdated);
+                    const editing    = editingCell?.name === ing.name;
+                    const editingPkg = editingPackage?.name === ing.name;
+                    const needsCost  = ing.needsCosting || ing.costPerUnit === 0;
+                    const outdated   = isOutdated(ing.dateLastUpdated);
+                    const checked    = selectedIngredients.has(ing.name);
                     return (
-                      <tr key={ing.name} style={{ borderBottom: "0.5px solid var(--color-border-tertiary)" }}>
+                      <tr key={ing.name} style={{
+                        borderBottom: "0.5px solid var(--color-border-tertiary)",
+                        background: checked ? C.amberBg : "transparent",
+                      }}>
+                        {/* Row checkbox */}
+                        <td style={{ padding: "8px 10px 8px 0" }}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              const next = new Set(selectedIngredients);
+                              checked ? next.delete(ing.name) : next.add(ing.name);
+                              setSelectedIngredients(next);
+                            }}
+                            style={{ cursor: "pointer" }}
+                          />
+                        </td>
                         <td style={{ padding: "8px 10px 8px 0", color: "var(--color-text-primary)", minWidth: 140 }}>
                           {ing.name}
                         </td>
@@ -751,11 +1224,8 @@ export default function BakersCostPro() {
                         <td style={{ padding: "8px 10px", textAlign: "center" }}>
                           {editing ? (
                             <input
-                              type="number"
-                              min="0"
-                              step="0.0001"
-                              value={editValue}
-                              autoFocus
+                              type="number" min="0" step="0.0001"
+                              value={editValue} autoFocus
                               onChange={e => setEditValue(e.target.value)}
                               onBlur={() => commitEdit(ing.name)}
                               onKeyDown={e => {
@@ -787,10 +1257,62 @@ export default function BakersCostPro() {
                             {needsCost && <Badge label="Needs costing" bg={C.amberBg} color={C.amber} />}
                             {outdated && !needsCost && <Badge label="Outdated" bg={C.amberBg} color={C.amber} />}
                             {!needsCost && !outdated && <Badge label="OK" bg={C.successBg} color={C.success} />}
+                            {ing.matchConfidence != null && (
+                              <Badge
+                                label={`${Math.round(ing.matchConfidence * 100)}% match`}
+                                bg={C.successBg} color={C.success}
+                              />
+                            )}
                           </div>
                         </td>
                         <td style={{ padding: "8px 0 8px 10px", color: "var(--color-text-secondary)", fontSize: 12 }}>
-                          {ing.pkg}
+                          {ing.matchedProductName ? (
+                            editingPkg ? (
+                              /* Inline package editor — shown after a Checkers match */
+                              <span style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                                <input
+                                  type="number" min="0" step="any" autoFocus
+                                  value={pkgEditVal.packageValue}
+                                  onChange={e => setPkgEditVal(v => ({ ...v, packageValue: e.target.value }))}
+                                  onKeyDown={e => {
+                                    if (e.key === "Enter") commitPackageEdit(ing.name);
+                                    if (e.key === "Escape") setEditingPackage(null);
+                                  }}
+                                  style={{ width: 60, fontSize: 12, padding: "2px 4px", borderRadius: 4 }}
+                                />
+                                <input
+                                  type="text"
+                                  value={pkgEditVal.packageUnit}
+                                  onChange={e => setPkgEditVal(v => ({ ...v, packageUnit: e.target.value }))}
+                                  onBlur={() => commitPackageEdit(ing.name)}
+                                  onKeyDown={e => {
+                                    if (e.key === "Enter") commitPackageEdit(ing.name);
+                                    if (e.key === "Escape") setEditingPackage(null);
+                                  }}
+                                  placeholder="g/ml/units"
+                                  style={{ width: 52, fontSize: 12, padding: "2px 4px", borderRadius: 4 }}
+                                />
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setEditingPackage({ name: ing.name });
+                                  setPkgEditVal({ packageValue: String(ing.packageValue ?? ""), packageUnit: ing.packageUnit ?? "" });
+                                }}
+                                title="Click to edit package info"
+                                style={{
+                                  background: "none", border: "none", cursor: "pointer",
+                                  color: C.amber, fontSize: 12, padding: "2px 4px", borderRadius: 4,
+                                  textDecoration: "underline dotted", textAlign: "left",
+                                }}
+                              >
+                                {ing.packageValue != null ? `${ing.packageValue}${ing.packageUnit}` : "—"}
+                                {ing.pricePerBaseUnit != null ? ` · R${ing.pricePerBaseUnit.toFixed(4)}/${ing.baseUnit}` : ""}
+                              </button>
+                            )
+                          ) : (
+                            ing.pkg
+                          )}
                         </td>
                       </tr>
                     );
@@ -1078,16 +1600,19 @@ export default function BakersCostPro() {
               <div>
                 <p style={{ margin: "0 0 4px", fontSize: 13, color: "var(--color-text-secondary)" }}>
                   {recipes.length} recipe{recipes.length !== 1 ? "s" : ""}
+                  {favourites.length > 0 && ` · ${favourites.length} starred`}
                 </p>
                 {/* Column headers */}
                 <div style={{
-                  display: "grid", gridTemplateColumns: "1fr auto auto",
+                  display: "grid", gridTemplateColumns: "auto 1fr auto auto auto",
                   padding: "6px 0", borderBottom: `1px solid var(--color-border-tertiary)`,
                   fontSize: 11, fontWeight: 500, color: "var(--color-text-secondary)",
-                  marginBottom: 2,
+                  marginBottom: 2, gap: 4,
                 }}>
+                  <span></span>
                   <span>Recipe</span>
-                  <span style={{ textAlign: "right", paddingRight: 32 }}>Cost price</span>
+                  <span style={{ textAlign: "right", paddingRight: 8 }}>Cost price</span>
+                  <span></span>
                   <span></span>
                 </div>
                 {recipes.map((r, idx) => {
@@ -1096,40 +1621,133 @@ export default function BakersCostPro() {
                     return s + (m && m.costPerUnit > 0 ? m.costPerUnit * ing.amount : 0);
                   }, 0);
                   const totalCost = ingTotal > 0 ? calcOverhead(ingTotal).total : null;
-                  const isActive = r.id === activeRecipeId;
+                  const isActive  = r.id === activeRecipeId;
+                  const isFav     = favourites.includes(r.id);
+                  const inCols    = Object.entries(collections).filter(([, ids]) => ids.includes(r.id)).map(([n]) => n);
+                  const menuOpen  = collectionMenu === r.id;
                   return (
                     <div
                       key={r.id}
                       style={{
-                        display: "grid", gridTemplateColumns: "1fr auto auto",
-                        alignItems: "center",
+                        display: "grid", gridTemplateColumns: "auto 1fr auto auto auto",
+                        alignItems: "center", gap: 4,
                         padding: "11px 0",
                         borderBottom: "0.5px solid var(--color-border-tertiary)",
                         background: isActive ? C.amberBg : "transparent",
                         marginInline: isActive ? -8 : 0,
                         paddingInline: isActive ? 8 : 0,
                         borderRadius: isActive ? 6 : 0,
-                        cursor: "pointer",
-                        transition: "background 0.1s",
+                        position: "relative",
                       }}
-                      onClick={() => { setActiveRecipeId(r.id); setTab("cost"); }}
                     >
-                      <div>
+                      {/* Star */}
+                      <button
+                        onClick={e => { e.stopPropagation(); toggleFavourite(r.id); }}
+                        title={isFav ? "Remove from favourites" : "Add to favourites"}
+                        style={{
+                          background: "none", border: "none", cursor: "pointer",
+                          fontSize: 16, padding: "0 4px", lineHeight: 1,
+                          color: isFav ? C.amber : "var(--color-border-tertiary)",
+                        }}
+                      >{isFav ? "★" : "☆"}</button>
+
+                      {/* Title + collection badges */}
+                      <div
+                        style={{ cursor: "pointer" }}
+                        onClick={() => { setActiveRecipeId(r.id); setTab("cost"); }}
+                      >
                         <span style={{
                           fontSize: 14, fontWeight: isActive ? 500 : 400,
                           color: isActive ? C.amber : "var(--color-text-primary)",
-                          marginRight: 8,
                         }}>
                           {String(idx + 1).padStart(2, "0")}. {r.title}
                         </span>
+                        {inCols.map(col => (
+                          <span key={col} style={{
+                            marginLeft: 6, fontSize: 10, padding: "1px 6px", borderRadius: 4,
+                            background: "var(--color-background-secondary)",
+                            color: "var(--color-text-secondary)", border: "0.5px solid var(--color-border-tertiary)",
+                          }}>{col}</span>
+                        ))}
                       </div>
-                      <span style={{
-                        fontSize: 14, fontWeight: 500, paddingRight: 20,
-                        color: totalCost ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                        textAlign: "right",
-                      }}>
+
+                      {/* Cost */}
+                      <span
+                        style={{
+                          fontSize: 14, fontWeight: 500, paddingRight: 4,
+                          color: totalCost ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                          textAlign: "right", cursor: "pointer",
+                        }}
+                        onClick={() => { setActiveRecipeId(r.id); setTab("cost"); }}
+                      >
                         {totalCost ? `R${totalCost.toFixed(2)}` : "—"}
                       </span>
+
+                      {/* Add to collection */}
+                      <div style={{ position: "relative" }}>
+                        <button
+                          onClick={e => { e.stopPropagation(); setCollectionMenu(menuOpen ? null : r.id); setNewColName(""); }}
+                          title="Add to collection"
+                          style={{
+                            background: "none", border: "none", cursor: "pointer",
+                            fontSize: 14, padding: "4px 6px", color: "var(--color-text-secondary)", opacity: 0.6,
+                          }}
+                        >+</button>
+                        {menuOpen && (
+                          <div
+                            style={{
+                              position: "absolute", right: 0, top: "110%", zIndex: 100,
+                              background: "var(--color-background-primary)",
+                              border: "0.5px solid var(--color-border-secondary)",
+                              borderRadius: 8, padding: 10, minWidth: 180,
+                              boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                            }}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 500, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                              Add to collection
+                            </p>
+                            {Object.keys(collections).map(col => (
+                              <button
+                                key={col}
+                                onClick={() => addToCollection(r.id, col)}
+                                style={{
+                                  display: "block", width: "100%", textAlign: "left",
+                                  padding: "6px 8px", fontSize: 13, borderRadius: 6,
+                                  background: (collections[col] || []).includes(r.id) ? C.amberBg : "none",
+                                  color: (collections[col] || []).includes(r.id) ? C.amber : "var(--color-text-primary)",
+                                  border: "none", cursor: "pointer",
+                                }}
+                              >
+                                {col}{(collections[col] || []).includes(r.id) ? " ✓" : ""}
+                              </button>
+                            ))}
+                            <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                              <input
+                                type="text"
+                                placeholder="New collection…"
+                                value={newColName}
+                                onChange={e => setNewColName(e.target.value)}
+                                onKeyDown={e => { if (e.key === "Enter" && newColName.trim()) addToCollection(r.id, newColName.trim()); }}
+                                style={{ flex: 1, fontSize: 12, padding: "4px 8px", borderRadius: 6 }}
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => { if (newColName.trim()) addToCollection(r.id, newColName.trim()); }}
+                                disabled={!newColName.trim()}
+                                style={{
+                                  padding: "4px 10px", fontSize: 12, borderRadius: 6,
+                                  background: newColName.trim() ? C.amber : "var(--color-background-secondary)",
+                                  color: newColName.trim() ? "#fff" : "var(--color-text-secondary)",
+                                  border: "none", cursor: newColName.trim() ? "pointer" : "not-allowed",
+                                }}
+                              >Add</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Delete */}
                       <button
                         onClick={e => { e.stopPropagation(); deleteRecipe(r.id); }}
                         title="Delete recipe"
@@ -1142,6 +1760,42 @@ export default function BakersCostPro() {
                     </div>
                   );
                 })}
+
+                {/* Collections summary */}
+                {Object.keys(collections).length > 0 && (
+                  <div style={{ marginTop: 24 }}>
+                    <p style={{ margin: "0 0 10px", fontSize: 12, fontWeight: 500, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                      My Collections
+                    </p>
+                    {Object.entries(collections).map(([colName, ids]) => (
+                      <div key={colName} style={{ marginBottom: 12 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--color-text-primary)" }}>{colName}</span>
+                          <span style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>{ids.length} recipe{ids.length !== 1 ? "s" : ""}</span>
+                        </div>
+                        {ids.map(id => {
+                          const rec = recipes.find(r => r.id === id);
+                          if (!rec) return null;
+                          return (
+                            <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 12 }}>
+                              <button
+                                onClick={() => { setActiveRecipeId(id); setTab("cost"); }}
+                                style={{
+                                  background: "none", border: "none", cursor: "pointer",
+                                  fontSize: 13, color: C.amber, padding: "3px 0", textDecoration: "underline dotted",
+                                }}
+                              >{rec.title}</button>
+                              <button
+                                onClick={() => removeFromCollection(id, colName)}
+                                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "var(--color-text-secondary)", opacity: 0.5 }}
+                              >✕</button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1160,7 +1814,100 @@ export default function BakersCostPro() {
           </div>
         )}
 
-      </div>
+      </div>{/* end CONTENT */}
+
+      {/* ══ PRICE REVIEW MODAL ══════════════════════════════════ */}
+      {reviewItem && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 1000,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: 16,
+        }}>
+          <div style={{
+            background: "var(--color-background-primary)", borderRadius: 12,
+            padding: 24, maxWidth: 560, width: "100%", maxHeight: "80vh",
+            overflowY: "auto", boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+          }}>
+            {/* Modal header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <div>
+                <p style={{ margin: "0 0 4px", fontSize: 11, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  Review match {reviewQueue.length > 0 ? `· ${reviewQueue.length + 1} remaining` : ""}
+                </p>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 500, color: "var(--color-text-primary)" }}>
+                  {reviewItem.ingredient.name}
+                </h3>
+                <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--color-text-secondary)" }}>
+                  Best match: {Math.round(reviewItem.score * 100)}% confidence — select a product or skip
+                </p>
+              </div>
+              <button
+                onClick={advanceReviewQueue}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "var(--color-text-secondary)", padding: 4, lineHeight: 1 }}
+              >✕</button>
+            </div>
+
+            {/* Candidate list */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {reviewItem.all.map(({ product, score }, idx) => {
+                const titleStr = product.name || product.title || "Unknown product";
+                const priceRaw = product.price ?? product.currentPrice ?? null;
+                const price = priceRaw != null
+                  ? (typeof priceRaw === "string" ? parseFloat(priceRaw.replace(/[^0-9.]/g, "")) : Number(priceRaw))
+                  : null;
+                const { packageValue, packageUnit } = parsePackageInfo(titleStr);
+                const isTop = idx === 0;
+                return (
+                  <div key={idx} style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "10px 12px", borderRadius: 8, gap: 10,
+                    border: `0.5px solid ${isTop ? C.amber : "var(--color-border-tertiary)"}`,
+                    background: isTop ? C.amberBg : "transparent",
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{
+                        margin: "0 0 2px", fontSize: 13,
+                        fontWeight: isTop ? 500 : 400,
+                        color: "var(--color-text-primary)",
+                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                      }}>
+                        {titleStr}
+                      </p>
+                      <p style={{ margin: 0, fontSize: 11, color: "var(--color-text-secondary)" }}>
+                        {price != null ? `R${price.toFixed(2)}` : "Price unavailable"}
+                        {packageValue != null ? ` · ${packageValue}${packageUnit}` : ""}
+                        {" · "}
+                        <span style={{ color: score >= 0.60 ? C.success : C.danger }}>
+                          {Math.round(score * 100)}% match
+                        </span>
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => acceptReviewProduct(product)}
+                      style={{
+                        padding: "5px 14px", fontSize: 12, borderRadius: 6, flexShrink: 0,
+                        background: C.amber, color: "#fff", border: "none", cursor: "pointer", fontWeight: 500,
+                      }}
+                    >Select</button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={advanceReviewQueue}
+              style={{
+                marginTop: 16, width: "100%", padding: "9px", fontSize: 13,
+                border: "0.5px solid var(--color-border-secondary)",
+                background: "none", color: "var(--color-text-secondary)",
+                borderRadius: 8, cursor: "pointer",
+              }}
+            >Skip this ingredient</button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
