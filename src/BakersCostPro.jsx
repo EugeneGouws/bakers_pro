@@ -84,13 +84,13 @@ const INGREDIENTS_DB = [
 // OVERHEAD FORMULA (reverse-engineered from Cake_Costings.xlsx)
 //   Operating  = 5% of ingredients
 //   Equipment  = 5% of ingredients
-//   Supplies   = 5% of ingredients + R16 (fixed packaging)
-//   Total      = Ingredients × 1.15 + R16
+//   Supplies   = 5% of ingredients + packaging cost
+//   Total      = Ingredients + Supplies + Operating + Equipment
 // ============================================================
-function calcOverhead(ingredientTotal) {
+function calcOverhead(ingredientTotal, pkgCost = 16) {
   const opCost    = ingredientTotal * 0.05;
   const equipment = ingredientTotal * 0.05;
-  const supplies  = ingredientTotal * 0.05 + 16;
+  const supplies  = ingredientTotal * 0.05 + pkgCost;
   const total     = ingredientTotal + supplies + opCost + equipment;
   return { supplies, opCost, equipment, total };
 }
@@ -489,6 +489,13 @@ export default function BakersCostPro() {
   const [collectionMenu, setCollectionMenu] = useState(null); // recipe id whose menu is open
   const [newColName, setNewColName]   = useState("");
 
+  // ── Costing: packaging control ───────────────────────────────
+  const [packagingEnabled, setPackagingEnabled] = useState(true);
+  const [packagingCost, setPackagingCost]       = useState(16);
+
+  // ── Recipe Book: filter controls ─────────────────────────────
+  const [bookShowStarred, setBookShowStarred]   = useState(false);
+
   // ── Price update ─────────────────────────────────────────────
   const [selectedIngredients, setSelectedIngredients] = useState(new Set());
   const [priceRunning, setPriceRunning]     = useState(false);
@@ -565,7 +572,7 @@ export default function BakersCostPro() {
 
   const enriched     = recipe ? recipe.ingredients.map(getIngredientWithCost) : [];
   const ingTotal     = enriched.reduce((s, i) => s + (i.lineTotal || 0), 0);
-  const overhead     = recipe ? calcOverhead(ingTotal) : null;
+  const overhead     = recipe ? calcOverhead(ingTotal, packagingEnabled ? packagingCost : 0) : null;
   const matchedCount = enriched.filter(i => i.dbMatch).length;
   const unmatchedCount = enriched.filter(i => !i.dbMatch || i.dbMatch.needsCosting).length;
   const filteredDb   = dbState.filter(i => !dbSearch || i.name.toLowerCase().includes(dbSearch.toLowerCase()));
@@ -1560,20 +1567,35 @@ export default function BakersCostPro() {
                         padding: "16px 20px", border: "0.5px solid var(--color-border-tertiary)", marginBottom: 16,
                       }}>
                         <p style={{ margin: "0 0 14px", fontSize: 14, fontWeight: 500, color: "var(--color-text-primary)" }}>Cost breakdown</p>
-                        {[
-                          { label: "Ingredients",                   value: ingTotal },
-                          { label: "Supplies (5% + R16 packaging)", value: overhead.supplies },
-                          { label: "Operating costs (5%)",          value: overhead.opCost },
-                          { label: "Equipment (5%)",                value: overhead.equipment },
-                        ].map(row => (
-                          <div key={row.label} style={{
-                            display: "flex", justifyContent: "space-between",
-                            padding: "7px 0", borderBottom: "0.5px solid var(--color-border-tertiary)", fontSize: 13,
-                          }}>
-                            <span style={{ color: "var(--color-text-secondary)" }}>{row.label}</span>
-                            <span style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>R{row.value.toFixed(2)}</span>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "0.5px solid var(--color-border-tertiary)", fontSize: 13 }}>
+                          <span style={{ color: "var(--color-text-secondary)" }}>Ingredients</span>
+                          <span style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>R{ingTotal.toFixed(2)}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "0.5px solid var(--color-border-tertiary)", fontSize: 13 }}>
+                          <label style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--color-text-secondary)", cursor: "pointer" }}>
+                            <input type="checkbox" checked={packagingEnabled} onChange={e => setPackagingEnabled(e.target.checked)} />
+                            Supplies (5% + packaging)
+                          </label>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            {packagingEnabled && (
+                              <input
+                                type="number" min="0" step="0.5"
+                                value={packagingCost}
+                                onChange={e => setPackagingCost(parseFloat(e.target.value) || 0)}
+                                style={{ width: 50, textAlign: "right", fontSize: 12, padding: "3px 6px", borderRadius: 4, background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-secondary)", color: "var(--color-text-primary)" }}
+                              />
+                            )}
+                            <span style={{ fontWeight: 500, color: "var(--color-text-primary)", minWidth: 60, textAlign: "right" }}>R{overhead.supplies.toFixed(2)}</span>
                           </div>
-                        ))}
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "0.5px solid var(--color-border-tertiary)", fontSize: 13 }}>
+                          <span style={{ color: "var(--color-text-secondary)" }}>Operating costs (5%)</span>
+                          <span style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>R{overhead.opCost.toFixed(2)}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "0.5px solid var(--color-border-tertiary)", fontSize: 13 }}>
+                          <span style={{ color: "var(--color-text-secondary)" }}>Equipment (5%)</span>
+                          <span style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>R{overhead.equipment.toFixed(2)}</span>
+                        </div>
                         <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0 8px", fontSize: 16 }}>
                           <span style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>Total cost</span>
                           <span style={{ fontWeight: 500, color: C.amber, fontSize: 20 }}>R{overhead.total.toFixed(2)}</span>
@@ -1638,10 +1660,25 @@ export default function BakersCostPro() {
               </div>
             ) : (
               <div>
-                <p style={{ margin: "0 0 4px", fontSize: 13, color: "var(--color-text-secondary)" }}>
-                  {recipes.length} recipe{recipes.length !== 1 ? "s" : ""}
-                  {favourites.length > 0 && ` · ${favourites.length} starred`}
-                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                  <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-secondary)" }}>
+                    {bookShowStarred ? favourites.length : recipes.length} recipe{(bookShowStarred ? favourites.length : recipes.length) !== 1 ? "s" : ""}
+                    {favourites.length > 0 && ` · ${favourites.length} starred`}
+                  </p>
+                  {favourites.length > 0 && (
+                    <button
+                      onClick={() => setBookShowStarred(s => !s)}
+                      style={{
+                        padding: "3px 10px", fontSize: 11, borderRadius: 20, border: "none", cursor: "pointer",
+                        background: bookShowStarred ? C.amber : "var(--color-background-secondary)",
+                        color: bookShowStarred ? "#fff" : "var(--color-text-secondary)",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {bookShowStarred ? "★ Starred" : "☆ All"}
+                    </button>
+                  )}
+                </div>
                 {/* Column headers */}
                 <div style={{
                   display: "grid", gridTemplateColumns: "auto 1fr auto auto auto",
@@ -1655,12 +1692,12 @@ export default function BakersCostPro() {
                   <span></span>
                   <span></span>
                 </div>
-                {recipes.map((r, idx) => {
+                {recipes.filter(r => !bookShowStarred || favourites.includes(r.id)).map((r, idx) => {
                   const ingTotal = r.ingredients.reduce((s, ing) => {
                     const m = matchIngredientEff(ing.name, ing.unit);
                     return s + (m && m.costPerUnit > 0 ? m.costPerUnit * ing.amount : 0);
                   }, 0);
-                  const totalCost = ingTotal > 0 ? calcOverhead(ingTotal).total : null;
+                  const totalCost = ingTotal > 0 ? calcOverhead(ingTotal, packagingEnabled ? packagingCost : 0).total : null;
                   const isActive  = r.id === activeRecipeId;
                   const isFav     = favourites.includes(r.id);
                   const inCols    = Object.entries(collections).filter(([, ids]) => ids.includes(r.id)).map(([n]) => n);
@@ -1891,7 +1928,7 @@ export default function BakersCostPro() {
                     display: "flex", justifyContent: "space-between", alignItems: "center",
                     padding: "10px 12px", borderRadius: 8, gap: 10,
                     border: `0.5px solid ${isTop ? C.amber : "var(--color-border-tertiary)"}`,
-                    background: isTop ? C.amberBg : "transparent",
+                    background: isTop ? C.amberBg : "var(--color-background-secondary)",
                   }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{
