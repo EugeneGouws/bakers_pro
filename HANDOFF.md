@@ -1,94 +1,94 @@
 # HANDOFF.md
 
-**Last updated:** 2026-03-30 (afternoon) · branch: `main`
+**Last updated:** 2026-03-31 · branch: `main`
 
 ## What was accomplished this session
 
-**Price update UX overhaul:**
-- Apify actor call: reduced from 10 → 5 items per search (focused candidate list)
-- All 5 candidates now always shown in modal for user disambiguation (removed silent auto-accept logic)
-- Per-ingredient GitHub commit on price selection (moved from post-loop batch commit)
-- Enhanced skip button: "Skip — none of these are appropriate"
-- Manual "Push to GitHub" button in DB tab for offline edits
+**v1.0 local-only release (previous session, now complete):**
+- Removed all GitHub sync: mount useEffect, syncStatus/communityDate state, sync badges, "Push to GitHub" button
+- Removed commitGitHubJson calls from finishImport() and acceptReviewProduct()
+- Removed unused `fetchGitHubJson`/`commitGitHubJson` import
+- Updated INGREDIENTS_DB: all 57 ingredients refreshed to 2026 ZA retail (Checkers/PnP), dateLastUpdated: "2026-03-31", needsCosting: false
+- Fixed price review modal contrast: rows 2–5 now use `var(--color-background)` with `var(--color-border-secondary)`
 
-**Packaging cost control:**
-- Added state: `packagingEnabled` (boolean, default true), `packagingCost` (number, default 16)
-- Updated `calcOverhead()` to accept optional `pkgCost` parameter (was hardcoded R16)
-- Costing tab UI: inline packaging checkbox toggle + editable R amount field
-- Sell-price cards (2×, 2.5×, 3×) recalculate live as packaging amount changes
+**Ingredient costing bug fixes (this session):**
+- Fixed chocolate/each-unit pricing: products measured in grams (e.g. 80g slab) now set costPerUnit = full product price (1 slab = 1 unit), not garbage per-gram value
+- Removed matchConfidence field from applyMatchedProductToIngredient return value
+- Removed % match badge from price review modal header and candidate rows
+- Removed matchConfidence badge from DB table Status column
 
-**Recipe Book starred filter:**
-- Added state: `bookShowStarred` (boolean filter toggle)
-- New "☆ All / ★ Starred" pill button in Recipe Book header
-- Filters recipe list to starred recipes only when active
-- Button only appears when user has favorite recipes
+**Matched product column (this session):**
+- Added "Matched product" column to Ingredients DB table
+- Shows exact Checkers product name used for last price update
+- Click to inline-edit; persists to localStorage via saveDb()
+- commitEdit() now accepts field parameter ("costPerUnit" | "matchedProductName")
 
-**Data sync fix:**
-- Updated bundled `INGREDIENTS_DB` in code to match `data/ingredients.json`
-- All 57 ingredients now use standardized units (g/ml/each only)
-- All ingredients: `dateLastUpdated: "2024-01-01"`, `needsCosting: true`
-- Ensures first app load shows correct data without requiring localStorage reset
-
-**Documentation:**
-- Updated CLAUDE.md: added new state variables, updated function signatures, added session log
-- Updated README.md: clarified unit types, packaging features, Apify flow, filter feature
+**URL import overhaul (this session):**
+- Netlify function now uses `recipe-scraper` for ~40 whitelisted sites (AllRecipes, BBC Good Food, Food Network, etc.)
+- Falls back to server-side JSON-LD/cheerio parsing for all other sites
+- Returns structured JSON { title, servings, ingredients[] } — no more raw HTML to client
+- Removed client-side extractJsonLdRecipe, extractFromJsonLd, extractFromHtml functions
+- importFromUrl() now consumes JSON directly, clears input on success
+- Updated Scanner help text
 
 ## Current state
 
 | Layer | Status | Notes |
 |---|---|---|
-| Scanner (URL import) | ✅ stable | Netlify function + JSON-LD + HTML fallback |
+| Scanner (URL import) | ✅ stable | recipe-scraper + JSON-LD fallback, server-side |
 | Scanner (file import) | ✅ stable | .txt .md .docx .pdf .xlsx |
-| Ingredients DB | ✅ stable | inline price editing, bulk Apify/Checkers update (5 items, all shown) |
+| Ingredients DB | ✅ stable | inline price/product-name editing, bulk Apify/Checkers update |
 | Costing tab | ✅ stable | overhead formula, optional packaging cost, sell-price suggestions, edit mode |
 | Recipe Book | ✅ stable | contents list, live cost, ★ favourites, starred filter, collections |
-| GitHub community sync | ✅ stable | mount fetch + per-selection commit + recipe share |
-| Price review modal | ⚠️ UX issue | Candidate rows visibility — background contrast insufficient |
+| GitHub community sync | ✅ removed | v1.0 is local-only; v1.1 feature |
+| Price review modal | ✅ stable | contrast fixed, % match badges removed |
 | Tests | ❌ not started | no test framework configured |
 
 ## Known bugs
 
-1. **Modal candidate row visibility** (Priority: HIGH)
-   - Non-top candidates still difficult to read despite background color change
-   - Root cause: `var(--color-background-secondary)` lacks sufficient contrast
-   - Fix: use `var(--color-background-primary)` or opaque white for better readability
-   - Location: `src/BakersCostPro.jsx` line 1931
+1. **URL import: sites requiring JavaScript rendering** (Expected limitation)
+   - Neither `recipe-scraper` nor the JSON-LD fallback can execute JS
+   - Affects: dynamically rendered recipe pages (e.g. some Wordpress themes)
+   - Workaround: use file import (.txt paste or .docx)
 
-2. **GitHub commit 502 error on localhost** (Expected)
-   - Netlify functions don't run in dev mode (`npm run dev`)
-   - Status: Test on production deployment to confirm it works
-   - Workaround: use manual "Push to GitHub" button in DB tab for local testing
+2. **recipe-scraper whitelist only covers ~40 domains**
+   - Sites not in the whitelist fall through to JSON-LD parsing, which handles most standard recipe sites
+   - If both fail, user sees clear error message
 
 ## Backlog
 
-- **Recipe Book: search/filter** — filter list by title as the collection grows
-- **Recipe Book: duplicate detection** — warn on import if a recipe with the same title already exists
-- **Contributor identity** — currently hardcoded `"anonymous"`; could allow user to set a display name in preferences
-- **Live Prices tab** — placeholder only; marked for removal (design decision pending)
-- **Recipe import 404s** — intermittent issue on certain recipe URLs; needs investigation
+- **v1.1 community sync** — re-enable shareOnImport toggle + GitHub commit flows (state/UI already preserved)
+- **Recipe Book: search/filter** — filter list by title as collection grows
+- **Recipe Book: duplicate detection** — warn on import if same title already exists
+- **Live Prices tab** — placeholder only; design decision pending
+- **Contributor identity** — hardcoded "anonymous"; could allow display name in preferences
 
 ## Next session plan
 
-1. **Fix modal candidate row visibility** (modal background: try `primary` or `#ffffff`)
-   - Test on local dev with `npm run dev`
-   - Verify all 5 rows now clearly readable
+1. **Test URL import** on production Netlify deployment:
+   - AllRecipes URL → ingredients parse correctly
+   - Unknown site with JSON-LD → falls through to cheerio fallback, still works
+   - Site with no markup → clear error shown
 
-2. **Test on production deployment** to verify:
-   - GitHub commits work (502 error won't happen on Netlify)
-   - Packaging controls persist correctly
-   - Recipe Book filter works end-to-end
+2. **Test price update flow end-to-end:**
+   - Select ingredient → Apify runs → modal shows candidates → select one → DB updates, persists after refresh
+   - Matched product name appears in DB table column
+   - Click product name → inline edit → save → persists
 
-3. **Post-deployment QA**:
-   - Clear browser cache, verify fresh ingredient load
-   - Test price update flow: select 1-2 items → modal appears → all 5 visible → select one → GitHub commit
-   - Test Recipe Book filter: star 2-3 recipes → toggle filter → verify list updates
+3. **Test chocolate pricing fix:**
+   - Dark/Milk/White Chocolate: select 80g slab @ R25 → costPerUnit = R25 (not R0.3125)
+
+4. **QA v1.0 checklist** (if not yet done):
+   - No GitHub errors in console on cold load
+   - No sync badges in header, no "Push to GitHub" button
+   - Modal rows 2–5 clearly readable in both light and dark mode
 
 ## Architecture reminder
 
 - All state lives in `BakersCostPro.jsx` — one component, no context/redux
 - `dbState` and `recipes` are localStorage-backed; write via `saveDb()` / `saveRecipes()` after every mutation
-- GitHub is the community source of truth; local data is personal overrides layered on top
+- App is local-only for v1.0 — no GitHub calls at runtime; `src/lib/github.js` kept for v1.1
 - Prices compute at render time (`getIngredientWithCost`) — never stored in recipe objects
-- `src/data/recipes.json` is the offline fallback seed only; community data lives in `data/recipes.json` (repo root)
-- GitHub writes go via `/.netlify/functions/github-commit` — never call GitHub API directly from the client
+- `src/data/recipes.json` is the offline fallback seed only
+- Netlify function `fetch-recipe.js` now returns JSON (not HTML) — client expects `{ title, servings, ingredients[] }`
 - Do not add browser-specific APIs — keep `fetch`-only for future React Native port
