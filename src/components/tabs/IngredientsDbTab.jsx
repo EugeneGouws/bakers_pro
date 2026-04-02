@@ -25,7 +25,7 @@ function fmtDate(dateStr) {
 // Props: { dbState, dbSearch, setDbSearch, selectedIngredients, setSelectedIngredients,
 //          editingCell, setEditingCell, editValue, setEditValue, commitEdit,
 //          editingPackage, setEditingPackage, pkgEditVal, setPkgEditVal, commitPackageEdit,
-//          priceRunning, priceProgress, onRunPriceUpdate, needsCostingCount }
+//          priceRunning, priceProgress, onRunPriceUpdate, needsCostingCount, onDeleteIngredient }
 // commitEdit(name, field) — field: "name" | "costPerUnit" | "matchedProductName"
 export default function IngredientsDbTab({
   dbState, dbSearch, setDbSearch,
@@ -33,7 +33,7 @@ export default function IngredientsDbTab({
   editingCell, setEditingCell, editValue, setEditValue, commitEdit,
   editingPackage, setEditingPackage, pkgEditVal, setPkgEditVal, commitPackageEdit,
   priceRunning, priceProgress, onRunPriceUpdate,
-  needsCostingCount,
+  needsCostingCount, onDeleteIngredient,
 }) {
   const filteredDb = dbState.filter(i =>
     !dbSearch || i.name.toLowerCase().includes(dbSearch.toLowerCase())
@@ -105,7 +105,7 @@ export default function IngredientsDbTab({
                   style={{ cursor: "pointer" }}
                 />
               </th>
-              {["Ingredient", "Unit", "R / unit", "Last updated", "Status", "Package", "Matched product"].map((h, i) => (
+              {["Ingredient", "Unit", "R / unit", "Last updated", "Status", "Package", "Matched product", ""].map((h, i) => (
                 <th key={h} style={{
                   textAlign: i >= 2 && i <= 3 ? "center" : "left",
                   padding: "8px 10px 8px 0", fontWeight: 500, color: "var(--color-text-secondary)",
@@ -293,6 +293,22 @@ export default function IngredientsDbTab({
                     ) : (
                       <span style={{ opacity: 0.4 }}>—</span>
                     )}
+                  </td>
+                  {/* Delete button */}
+                  <td style={{ padding: "8px 10px 8px 0", textAlign: "center" }}>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Delete "${ing.name}" from ingredients?`)) {
+                          onDeleteIngredient(ing.name);
+                        }
+                      }}
+                      title="Delete ingredient"
+                      style={{
+                        background: "none", border: "none", cursor: "pointer",
+                        fontSize: 14, color: C.danger, padding: "2px 6px", borderRadius: 4,
+                        opacity: 0.6, lineHeight: 1,
+                      }}
+                    >✕</button>
                   </td>
                 </tr>
               );

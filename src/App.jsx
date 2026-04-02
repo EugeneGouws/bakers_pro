@@ -249,6 +249,10 @@ export default function App() {
     setEditingPackage(null);
   }
 
+  function onDeleteIngredient(name) {
+    setDb(dbState.filter(ing => ing.name !== name));
+  }
+
   // ── Render ───────────────────────────────────────────────────
   return (
     <div style={{ fontFamily: "var(--font-sans)", maxWidth: 860, margin: "0 auto", paddingBottom: 40 }}>
@@ -286,6 +290,7 @@ export default function App() {
           priceProgress={apify.priceProgress}
           onRunPriceUpdate={() => apify.runPriceUpdate(selectedIngredients, dbState, setDb)}
           needsCostingCount={needsCostingCount}
+          onDeleteIngredient={onDeleteIngredient}
         />
       )}
 
