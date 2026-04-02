@@ -17,8 +17,8 @@ export default function Button({ children, onClick, disabled, variant = "primary
     },
     secondary: {
       background: "var(--color-background-secondary)",
-      color: "var(--color-text)",
-      border: "1px solid var(--color-border)",
+      color: "var(--color-text-primary)",
+      border: "1px solid var(--color-border-secondary)",
     },
     danger: {
       background: "var(--color-danger-bg, #FCEBEB)",

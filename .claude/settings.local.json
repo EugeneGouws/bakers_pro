@@ -16,7 +16,10 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(grep -o \"--[a-z-]*\")",
+      "Bash(read var:*)",
+      "Read(//tmp/**)"
     ]
   },
   "enabledPlugins": {

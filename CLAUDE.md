@@ -54,6 +54,16 @@ github-commit.js         — kept, used in v2.1
 * All localStorage keys: bakerspro\_db | bakerspro\_recipes | bakerspro\_favourites | bakerspro\_collections | bakerspro\_preferences
 * Never store computed prices in recipe objects — always compute at render via getIngredientWithCost
 * No changing BakersCostPro.jsx. it serves as a reference for creating the new files and will persist as V1.0
+* **CSS variables MUST be defined in `src/index.css` AND `src/index.css` MUST be imported in `src/main.jsx`.** Every `var(--color-*)` used in a component must have a corresponding `:root` definition in index.css. If you add a new CSS variable, verify it exists in both light and dark mode blocks. Never assume a CSS variable exists — grep for it first.
+
+## Mistakes Log
+
+### 2026-04-02: index.css never imported — all CSS variables were undefined
+- **Root cause:** During the v2.0 scaffold, `src/index.css` was created with CSS custom properties (`--color-background`, `--color-text-primary`, etc.) but was never imported in `src/main.jsx`. Every `var(--color-*)` in every component resolved to nothing (transparent/inherit).
+- **Impact:** The PriceReviewModal appeared transparent — content behind bled through. This persisted across multiple sessions because components happened to use enough inline fallback colors to look "mostly right" in casual testing.
+- **Fix:** Added `import './index.css'` to `src/main.jsx`. Also added missing `--color-background` and `--color-background-primary` variable definitions to both light and dark mode blocks.
+- **Status:** ✅ Fixed. Modal and all UI now renders with correct colors and opacity.
+- **Prevention:** Always verify that global CSS files are imported at the entry point. When debugging "transparent" or "invisible" UI, check that CSS custom properties actually resolve — inspect computed styles in DevTools or grep for the variable definition.
 
 ## Session Log
 

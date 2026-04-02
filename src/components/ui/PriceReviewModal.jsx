@@ -67,7 +67,7 @@ export default function PriceReviewModal({ reviewItem, reviewQueue, onAccept, on
                 display: "flex", justifyContent: "space-between", alignItems: "center",
                 padding: "14px 16px", borderRadius: 8, gap: 12,
                 border: "2px solid var(--color-border-secondary)",
-                background: "#fff",
+                background: "var(--color-background)",
                 cursor: "pointer",
                 textAlign: "left",
                 width: "100%",
@@ -79,7 +79,7 @@ export default function PriceReviewModal({ reviewItem, reviewQueue, onAccept, on
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.borderColor = "var(--color-border-secondary)";
-                e.currentTarget.style.background = "#fff";
+                e.currentTarget.style.background = "var(--color-background)";
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>

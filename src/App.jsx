@@ -321,8 +321,6 @@ export default function App() {
           onAddToCollection={onAddToCollection}
           onRemoveFromCollection={onRemoveFromCollection}
           onDeleteRecipe={onDeleteRecipe}
-          onStartEditRecipe={onStartEditRecipe}
-          packagingCost={packagingCost}
           packagingCost={packagingCost}
           matchIngredientEff={(name, unit) => matchIngredientEff(name, unit, dbState)}
           calcOverhead={calcOverhead}
