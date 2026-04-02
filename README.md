@@ -8,8 +8,7 @@ A recipe costing tool for South African bakers. Community data is shared via Git
 - **Ingredient DB** — 57 ZAR-priced ingredients (g/ml/each units); click any price to edit inline; bulk price update via Apify/Checkers (5 candidates shown for user selection); tracks last-updated date and costing status
 - **Costing** — per-ingredient breakdown with 15% overhead (5% operations + 5% equipment + 5% supplies) + packaging cost (default R16, editable); sell-price multipliers 2×, 2.5×, 3× (user-editable)
 - **Recipe Book** — numbered list of all recipes with live cost price; ★ favourites; filter to starred recipes only; named collections; inline edit of title and quantities
-- **Community sync** — on load, fetches shared ingredient prices and community recipes from GitHub; "Community synced" badge confirms live data
-- **Share with community** — optional toggle on import; shared recipes are committed to the GitHub repo for all users
+- **Ingredient deletion** — click ✕ to remove erroneous ingredients from the database (with confirmation)
 
 ## Stack
 
@@ -58,4 +57,23 @@ Set these in **Netlify → Site settings → Environment variables**:
 
 ## First load
 
-On first open the app seeds from `src/data/recipes.json`, then silently merges community data from GitHub. To reset personal data: `localStorage.clear()` in the browser console, then reload.
+On first open the app seeds from `src/data/recipes.json`. To reset personal data: `localStorage.clear()` in the browser console, then reload.
+
+## Roadmap
+
+**v2.0** (complete)
+- Modular React refactor with local-first architecture
+- Recipe import from files (.txt, .md, .docx, .pdf, .xlsx)
+- Ingredient DB with inline editing and bulk price updates via Apify/Checkers
+- Costing calculator with overhead formula and configurable packaging/markup
+- Recipe collection with favorites and named groupings
+
+**v2.1** (in progress)
+- Recipe Book search/filter by title
+- Duplicate recipe detection on import
+- Full frontend design overhaul (Tailwind CSS)
+
+**v2.2+** (planned)
+- Community sync — shared ingredient prices and recipes via GitHub
+- Contributor identity — display name in preferences
+- Price history tracking per ingredient
