@@ -67,11 +67,13 @@ github-commit.js         — kept, used in v2.1
 
 ## Session Log
 
-### 2026-04-02: UI redesign & costing features (v2.0 refinement)
+### 2026-04-02: UI redesign, costing features, delete option (v2.0 complete)
 - ✅ Renamed "Scanner" → "Upload" tab across TabBar and empty states
-- ✅ Redesigned PriceReviewModal: equal visibility candidates (white backgrounds, amber hover), fixed visibility issue (solid #fff bg, thicker borders, amber highlight on hover)
+- ✅ Redesigned PriceReviewModal: equal visibility candidates (white backgrounds, amber hover), fixed visibility issue (solid bg, thicker borders)
 - ✅ Stripped URL import from ScannerTab — file drop only (.txt/.md/.docx/.pdf/.xlsx)
-- ✅ CostingTab refactored: (1) packaging now separate editable row (R16 default, user-editable float), (2) sell multipliers editable (2, 2.5, 3), (3) per-serving block with servings input
-- ✅ calcOverhead() updated to return separate `packaging` field
-- ✅ Removed packagingEnabled state from App.jsx
-- ⏳ Bug #6 (unit mismatch detection in costing) deferred — user approved, to be fixed server-side before deploy
+- ✅ CostingTab refactored: (1) packaging now separate editable row (R16 default), (2) sell multipliers editable (2, 2.5, 3), (3) per-serving block with servings input
+- ✅ Fixed critical CSS bug: index.css never imported, added missing --color-background variables
+- ✅ Fixed Button.jsx undefined CSS variables, duplicate props, erroneous seed data
+- ✅ Added delete option to Ingredients DB table (with confirmation dialog)
+- ✅ Synced seed ingredients to correct prices (2026-04-02)
+- ⏳ Bug #6 (unit mismatch detection) deferred — user approved, to be fixed server-side before deploy

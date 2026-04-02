@@ -1,22 +1,23 @@
 # HANDOFF.md
 
-**Last updated:** 2026-04-02 · branch: `v2.0`
+**Last updated:** 2026-04-02 · branch: `v2.0` · **Status: v2.0 COMPLETE**
 
-## What was accomplished this session
+## v2.0 Accomplishments (across 3+ sessions)
 
-**v2.0 modular refactor (3 phases completed in prior session):**
-- Phase 1: Extracted libs (ingredients.js, storage.js, recipeImport.js, apify.js, productSelection.js) and UI components (Header, TabBar, Badge, Button, Modal)
-- Phase 2: Built custom hooks (useDb, useRecipes, useApify) with auto-persistence
-- Phase 3: Created all 5 tab components (ScannerTab, IngredientsDbTab, CostingTab, RecipeBookTab, LivePricesTab)
+**Phase 1-3: Modular refactor (prior sessions)**
+- Extracted libs (ingredients.js, storage.js, recipeImport.js, apify.js, productSelection.js) and UI components (Header, TabBar, Badge, Button, Modal)
+- Built custom hooks (useDb, useRecipes, useApify) with auto-persistence
+- Created all 5 tab components (ScannerTab, IngredientsDbTab, CostingTab, RecipeBookTab, LivePricesTab)
 
-**This session — UI refinement & costing improvements:**
+**This session — UI refinement, critical fixes, final features**
 - ✅ Renamed "Scanner" → "Upload" tab
-- ✅ Redesigned PriceReviewModal: white candidate boxes, amber hover, fixed visibility issue
+- ✅ Redesigned PriceReviewModal: white candidate boxes, amber hover states
+- ✅ Fixed CRITICAL CSS bug: index.css never imported (all CSS variables were undefined). Added import to main.jsx, defined missing --color-background variables
+- ✅ Fixed Button.jsx undefined CSS variables, duplicate props in RecipeBookTab
 - ✅ Stripped URL import from ScannerTab (file drop only)
-- ✅ CostingTab: packaging now separate editable row (R16 default)
-- ✅ CostingTab: sell-price multipliers now editable (2, 2.5, 3)
-- ✅ CostingTab: added per-serving block with servings input
-- ✅ Updated calcOverhead() to return separate `packaging` field
+- ✅ CostingTab: packaging now separate editable row (R16 default), sell multipliers editable (2, 2.5, 3), per-serving block with servings input
+- ✅ Added delete option to Ingredients DB table (with confirmation)
+- ✅ Synced seed ingredients to correct prices (2026-04-02)
 
 ## Current state
 
@@ -39,21 +40,17 @@
 
 ## Backlog
 
-- **Ingredients DB: delete option** — allow removal of erroneous ingredients from DB (with confirmation)
-- **Bug #6: Unit mismatch detection** — flag mismatches with badge instead of computing wrong cost
-- **Recipe Book: search/filter** — filter list by title as collection grows
+**v2.1 enhancements & polish:**
+- **Bug #6: Unit mismatch detection** — flag mismatches with badge instead of computing wrong cost (deferred to server-side)
+- **Recipe Book: search/filter** — filter list by title, quick find by ingredient
 - **Recipe Book: duplicate detection** — warn on import if same title already exists
 - **Live Prices tab** — placeholder only; design decision pending
-- **v2.1 community features** — GitHub sync, shared recipes/prices, contributor identity
+- **Frontend design refactor** — extract color tokens to CSS variables, normalize inline styles, complete dark mode support
 
-## Next session plan
-
-1. **Test all 5 changes in local browser** (user to run `npm run dev` and verify UI/behavior)
-2. **Once local testing passes**, decide next priority:
-   - Option A: Implement bug #6 (unit mismatch detection)
-   - Option B: Implement Ingredients DB delete option
-   - Option C: Add Recipe Book search/filter
-   - Option D: Other backlog items
+**v2.1 community features (future):**
+- **GitHub sync** — re-enable shareOnImport toggle, community recipes/prices
+- **Contributor identity** — display name in preferences (currently hardcoded "anonymous")
+- **Price history** — track price changes over time per ingredient
 
 ## Architecture reminder v2.0
 
