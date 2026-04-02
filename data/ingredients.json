@@ -81,17 +81,6 @@
       "needsCosting": true
     },
     {
-      "name": "Butter (cup)",
-      "aliases": [
-        "butter"
-      ],
-      "unit": "ml",
-      "costPerUnit": 0.11875,
-      "pkg": "480ml · R57",
-      "dateLastUpdated": "2024-01-01",
-      "needsCosting": true
-    },
-    {
       "name": "Butter (g)",
       "aliases": [
         "butter"

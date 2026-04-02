@@ -1,94 +1,66 @@
 # HANDOFF.md
 
-**Last updated:** 2026-03-31 · branch: `main`
+**Last updated:** 2026-04-02 · branch: `v2.0`
 
 ## What was accomplished this session
 
-**v1.0 local-only release (previous session, now complete):**
-- Removed all GitHub sync: mount useEffect, syncStatus/communityDate state, sync badges, "Push to GitHub" button
-- Removed commitGitHubJson calls from finishImport() and acceptReviewProduct()
-- Removed unused `fetchGitHubJson`/`commitGitHubJson` import
-- Updated INGREDIENTS_DB: all 57 ingredients refreshed to 2026 ZA retail (Checkers/PnP), dateLastUpdated: "2026-03-31", needsCosting: false
-- Fixed price review modal contrast: rows 2–5 now use `var(--color-background)` with `var(--color-border-secondary)`
+**v2.0 modular refactor (3 phases completed in prior session):**
+- Phase 1: Extracted libs (ingredients.js, storage.js, recipeImport.js, apify.js, productSelection.js) and UI components (Header, TabBar, Badge, Button, Modal)
+- Phase 2: Built custom hooks (useDb, useRecipes, useApify) with auto-persistence
+- Phase 3: Created all 5 tab components (ScannerTab, IngredientsDbTab, CostingTab, RecipeBookTab, LivePricesTab)
 
-**Ingredient costing bug fixes (this session):**
-- Fixed chocolate/each-unit pricing: products measured in grams (e.g. 80g slab) now set costPerUnit = full product price (1 slab = 1 unit), not garbage per-gram value
-- Removed matchConfidence field from applyMatchedProductToIngredient return value
-- Removed % match badge from price review modal header and candidate rows
-- Removed matchConfidence badge from DB table Status column
-
-**Matched product column (this session):**
-- Added "Matched product" column to Ingredients DB table
-- Shows exact Checkers product name used for last price update
-- Click to inline-edit; persists to localStorage via saveDb()
-- commitEdit() now accepts field parameter ("costPerUnit" | "matchedProductName")
-
-**URL import overhaul (this session):**
-- Netlify function now uses `recipe-scraper` for ~40 whitelisted sites (AllRecipes, BBC Good Food, Food Network, etc.)
-- Falls back to server-side JSON-LD/cheerio parsing for all other sites
-- Returns structured JSON { title, servings, ingredients[] } — no more raw HTML to client
-- Removed client-side extractJsonLdRecipe, extractFromJsonLd, extractFromHtml functions
-- importFromUrl() now consumes JSON directly, clears input on success
-- Updated Scanner help text
+**This session — UI refinement & costing improvements:**
+- ✅ Renamed "Scanner" → "Upload" tab
+- ✅ Redesigned PriceReviewModal: white candidate boxes, amber hover, fixed visibility issue
+- ✅ Stripped URL import from ScannerTab (file drop only)
+- ✅ CostingTab: packaging now separate editable row (R16 default)
+- ✅ CostingTab: sell-price multipliers now editable (2, 2.5, 3)
+- ✅ CostingTab: added per-serving block with servings input
+- ✅ Updated calcOverhead() to return separate `packaging` field
 
 ## Current state
 
 | Layer | Status | Notes |
 |---|---|---|
-| Scanner (URL import) | ✅ stable | recipe-scraper + JSON-LD fallback, server-side |
-| Scanner (file import) | ✅ stable | .txt .md .docx .pdf .xlsx |
+| File import | ✅ stable | .txt .md .docx .pdf .xlsx |
 | Ingredients DB | ✅ stable | inline price/product-name editing, bulk Apify/Checkers update |
-| Costing tab | ✅ stable | overhead formula, optional packaging cost, sell-price suggestions, edit mode |
-| Recipe Book | ✅ stable | contents list, live cost, ★ favourites, starred filter, collections |
-| GitHub community sync | ✅ removed | v1.0 is local-only; v1.1 feature |
-| Price review modal | ✅ stable | contrast fixed, % match badges removed |
+| Costing tab | ✅ stable | ingredient breakdown, 15% overhead, editable packaging, editable multipliers, per-serving view |
+| Recipe Book | ✅ stable | list with live costs, ★ favourites, starred filter, named collections |
+| Price review modal | ✅ stable | white candidate boxes, amber hover highlight |
 | Tests | ❌ not started | no test framework configured |
 
 ## Known bugs
 
-1. **URL import: sites requiring JavaScript rendering** (Expected limitation)
-   - Neither `recipe-scraper` nor the JSON-LD fallback can execute JS
-   - Affects: dynamically rendered recipe pages (e.g. some Wordpress themes)
-   - Workaround: use file import (.txt paste or .docx)
-
-2. **recipe-scraper whitelist only covers ~40 domains**
-   - Sites not in the whitelist fall through to JSON-LD parsing, which handles most standard recipe sites
-   - If both fail, user sees clear error message
+1. **#6: Unit mismatch in costing** (Deferred)
+   - When recipe unit (g/ml) doesn't match DB unit (each), fallback matching produces garbage costs
+   - Example: recipe "80g chocolate" matches DB "chocolate bar (1 each @ R52)" → shows R52/g = R52,000 total
+   - Status: User approved deferral; to be fixed server-side before production deploy
+   - Local npm run dev shows correct prices on seed data
 
 ## Backlog
 
-- **v1.1 community sync** — re-enable shareOnImport toggle + GitHub commit flows (state/UI already preserved)
+- **Ingredients DB: delete option** — allow removal of erroneous ingredients from DB (with confirmation)
+- **Bug #6: Unit mismatch detection** — flag mismatches with badge instead of computing wrong cost
 - **Recipe Book: search/filter** — filter list by title as collection grows
 - **Recipe Book: duplicate detection** — warn on import if same title already exists
 - **Live Prices tab** — placeholder only; design decision pending
-- **Contributor identity** — hardcoded "anonymous"; could allow display name in preferences
+- **v2.1 community features** — GitHub sync, shared recipes/prices, contributor identity
 
 ## Next session plan
 
-1. **Test URL import** on production Netlify deployment:
-   - AllRecipes URL → ingredients parse correctly
-   - Unknown site with JSON-LD → falls through to cheerio fallback, still works
-   - Site with no markup → clear error shown
+1. **Test all 5 changes in local browser** (user to run `npm run dev` and verify UI/behavior)
+2. **Once local testing passes**, decide next priority:
+   - Option A: Implement bug #6 (unit mismatch detection)
+   - Option B: Implement Ingredients DB delete option
+   - Option C: Add Recipe Book search/filter
+   - Option D: Other backlog items
 
-2. **Test price update flow end-to-end:**
-   - Select ingredient → Apify runs → modal shows candidates → select one → DB updates, persists after refresh
-   - Matched product name appears in DB table column
-   - Click product name → inline edit → save → persists
+## Architecture reminder v2.0
 
-3. **Test chocolate pricing fix:**
-   - Dark/Milk/White Chocolate: select 80g slab @ R25 → costPerUnit = R25 (not R0.3125)
-
-4. **QA v1.0 checklist** (if not yet done):
-   - No GitHub errors in console on cold load
-   - No sync badges in header, no "Push to GitHub" button
-   - Modal rows 2–5 clearly readable in both light and dark mode
-
-## Architecture reminder
-
-- All state lives in `BakersCostPro.jsx` — one component, no context/redux
-- `dbState` and `recipes` are localStorage-backed; write via `saveDb()` / `saveRecipes()` after every mutation
-- App is local-only for v1.0 — no GitHub calls at runtime; `src/lib/github.js` kept for v1.1
-- Prices compute at render time (`getIngredientWithCost`) — never stored in recipe objects
-- `src/data/recipes.json` is the offline fallback seed only
-- Netlify function `fetch-recipe.js` now returns JSON (not HTML) — client expects `{ title, servings, ingredients[] }`
-- Do not add browser-specific APIs — keep `fetch`-only for future React Native port
+- **Modular**: src/ split into components/, hooks/, lib/, data/
+- **State management**: Custom hooks (useDb, useRecipes, useApify) with localStorage auto-persist
+- **No logic in tabs**: Tabs are display-only; all logic in lib/ or hooks/
+- **Prices compute at render**: Never stored in recipe objects; always via matchIngredientEff()
+- **Overhead formula**: Total = Ingredients + Supplies(5%) + Operating(5%) + Equipment(5%) + Packaging
+- **Keep fetch-only**: No browser-specific APIs for future React Native port
+- **v1.0 frozen**: BakersCostPro.jsx serves as reference only; never modify

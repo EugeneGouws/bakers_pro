@@ -4,9 +4,9 @@ A recipe costing tool for South African bakers. Community data is shared via Git
 
 ## Features
 
-- **Recipe import** — paste a URL (JSON-LD recipe sites) or upload `.txt`, `.md`, `.docx`, `.pdf`, `.xlsx`
+- **Recipe import** — upload `.txt`, `.md`, `.docx`, `.pdf`, `.xlsx`
 - **Ingredient DB** — 57 ZAR-priced ingredients (g/ml/each units); click any price to edit inline; bulk price update via Apify/Checkers (5 candidates shown for user selection); tracks last-updated date and costing status
-- **Costing** — per-ingredient breakdown with 15% overhead + optional packaging cost (default R16, editable per-recipe); sell-price suggestions at 2×, 2.5×, 3×
+- **Costing** — per-ingredient breakdown with 15% overhead (5% operations + 5% equipment + 5% supplies) + packaging cost (default R16, editable); sell-price multipliers 2×, 2.5×, 3× (user-editable)
 - **Recipe Book** — numbered list of all recipes with live cost price; ★ favourites; filter to starred recipes only; named collections; inline edit of title and quantities
 - **Community sync** — on load, fetches shared ingredient prices and community recipes from GitHub; "Community synced" badge confirms live data
 - **Share with community** — optional toggle on import; shared recipes are committed to the GitHub repo for all users
