@@ -6,7 +6,6 @@ import useApify      from "./hooks/useApify.js";
 
 import { loadFavourites, saveFavourites, loadCollections, saveCollections } from "./lib/storage.js";
 import { matchIngredientEff, calcOverhead, FREE_INGREDIENTS, todayStr }      from "./lib/ingredients.js";
-import { importFromFile }                                                     from "./lib/recipeImport.js";
 import { convertToBaseUnits }                                                 from "./lib/apify.js";
 
 import Header           from "./components/ui/Header.jsx";
@@ -37,9 +36,7 @@ export default function App() {
   // ── Apify price-update cycle ─────────────────────────────────
   const apify = useApify();
 
-  // ── Import UI state ──────────────────────────────────────────
-  const [importing, setImporting] = useState(false);
-  const [error,     setError]     = useState(null);
+  // Import UI state is managed by ScannerTab (it owns the parse + AI-validate pipeline)
 
   // ── Ingredients DB UI state ──────────────────────────────────
   const [dbSearch,             setDbSearch]             = useState("");
@@ -121,21 +118,10 @@ export default function App() {
     setTab("cost");
   }
 
-  // ── Import handlers ──────────────────────────────────────────
-  async function onImportFile(file) {
-    if (!file) return;
-    setImporting(true);
-    setError(null);
-    try {
-      const parsed = await importFromFile(file);
-      if (!parsed.ingredients.length)
-        throw new Error("No ingredients found. Make sure the file contains lines like '2 cups flour'.");
-      finishImport(parsed);
-    } catch (e) {
-      setError("File import failed: " + e.message);
-    } finally {
-      setImporting(false);
-    }
+  // ── Import handler ───────────────────────────────────────────
+  // ScannerTab handles parse + AI validation; this receives the final result.
+  function onImportComplete(parsed) {
+    finishImport(parsed);
   }
 
   // ── Recipe handlers ──────────────────────────────────────────
@@ -268,10 +254,8 @@ export default function App() {
 
       {tab === "scan" && (
         <ScannerTab
-          importing={importing}
-          onImportFile={onImportFile}
-          error={error}
-          onClearError={() => setError(null)}
+          dbIngredients={dbState}
+          onImportComplete={onImportComplete}
         />
       )}
 
