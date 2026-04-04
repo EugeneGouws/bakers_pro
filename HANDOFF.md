@@ -9,8 +9,10 @@
 - ✅ `ScannerTab` — wired to `ImportConfirmModal`; tags ingredients via `matchIngredientEff` before opening modal; fires `suggestIngredientFixes` in background; functional state guard handles modal-closed-before-AI-returns safely
 - ✅ Nano `responseConstraint` — passes JSON schema to `session.prompt()` to hard-constrain output shape; equivalent to Ollama's `format` parameter
 - ✅ System prompt — rewritten as explicit JSON API with SA/Afrikaans baking glossary embedded (koekmeel, koeksoda, konfyt, amasi, stork bake, rama)
-- ✅ Post-import pre-selection — `finishImport` selects all `needsCosting` / `costPerUnit === 0` / outdated (>30 days) ingredients so DB tab is ready for an immediate price run
+- ✅ Post-import pre-selection — removed (user found auto-selection unhelpful)
 - ✅ Price update deselect — `onRunPriceUpdate` awaits completion then clears `selectedIngredients`
+- ✅ Progressive price modal — modal opens immediately on "Update Prices"; candidates stream in per-ingredient as each Apify fetch resolves; skeleton rows while loading; error-tolerant (partial results stay visible)
+- ✅ Editable ingredient names — recipe edit mode now allows changing ingredient name, amount, and unit; on save, rematches against DB; prompts user via modal when new (unknown) ingredients are detected
 - ✅ AI integration skill doc saved to `~/.claude/skills/ai-integration/SKILL.md`
 
 ## Current state
@@ -20,13 +22,14 @@
 | File import | ✅ stable | .txt .md .docx .pdf .xlsx |
 | AI validation | ✅ stable | Focused unmatched-only flow; Nano responseConstraint; SA glossary |
 | ImportConfirmModal | ✅ stable | Live status tags, pulsing dot, Yes/No confirm, Use as parsed |
-| Post-import pre-selection | ✅ stable | New + outdated ingredients selected on recipe save |
+| Post-import pre-selection | removed | User found auto-selection unhelpful |
 | Price update | ✅ stable | Clears selection on completion |
 | Consent screens | ✅ stable | Storage consent banner + AI download prompt |
 | Ingredients DB | ✅ stable | Inline editing, bulk Apify/Checkers update, delete |
 | Costing tab | ✅ stable | Ingredient breakdown, overhead, editable packaging/multipliers |
 | Recipe Book | ✅ stable | List with live costs, ★ favourites, named collections |
-| Price review modal | ✅ stable | White candidate boxes, amber hover |
+| Price review modal | ✅ stable | Progressive — opens immediately, candidates stream in; skeleton rows while loading; error notice on partial failure |
+| Recipe editing | ✅ stable | Name, amount, unit all editable; rematches DB on save; new-ingredient modal prompt |
 | Tests | ❌ not started | No test framework configured |
 
 ## Known bugs

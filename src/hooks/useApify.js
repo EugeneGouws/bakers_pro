@@ -29,8 +29,10 @@ export default function useApify() {
     const targets = dbState.filter(ing => selectedNames.has(ing.name));
     setPriceProgress({ done: 0, total: targets.length, current: targets[0]?.name ?? "" });
 
-    const toReview = [];
-    const errors   = [];
+    setReviewItem(null);
+    setReviewQueue([]);
+    let firstSet = false;
+    const errors = [];
 
     for (let i = 0; i < targets.length; i++) {
       const ing = targets[i];
@@ -39,7 +41,13 @@ export default function useApify() {
         const candidates = await fetchApifyProducts(ing);
         if (candidates.length === 0) continue;
         const { best, score, all } = chooseBestCandidate(ing, candidates);
-        toReview.push({ ingredient: ing, all, best, score });
+        const result = { ingredient: ing, all, best, score };
+        if (!firstSet) {
+          setReviewItem(result);
+          firstSet = true;
+        } else {
+          setReviewQueue(prev => [...prev, result]);
+        }
       } catch (e) {
         errors.push(`"${ing.name}": ${e.message}`);
       }
@@ -47,11 +55,6 @@ export default function useApify() {
 
     setPriceProgress({ done: targets.length, total: targets.length, current: "" });
     if (errors.length > 0) setError(`Price update errors — ${errors.join("; ")}`);
-
-    if (toReview.length > 0) {
-      setReviewItem(toReview[0]);
-      setReviewQueue(toReview.slice(1));
-    }
 
     setPriceRunning(false);
   }

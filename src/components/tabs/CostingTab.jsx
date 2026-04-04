@@ -112,7 +112,19 @@ export default function CostingTab({
               <tbody>
                 {editingRecipe.ingredients.map((ing, idx) => (
                   <tr key={ing.id ?? idx} style={{ borderBottom: "0.5px solid var(--color-border-tertiary)" }}>
-                    <td style={{ padding: "7px 10px 7px 0", color: "var(--color-text-primary)" }}>{ing.name}</td>
+                    <td style={{ padding: "7px 10px 7px 0" }}>
+                      <input
+                        type="text"
+                        value={ing.name}
+                        onChange={e => setEditingRecipe(er => ({
+                          ...er,
+                          ingredients: er.ingredients.map((x, i) =>
+                            i === idx ? { ...x, name: e.target.value } : x
+                          ),
+                        }))}
+                        style={{ width: "100%", fontSize: 13, padding: "3px 6px", borderRadius: 4, color: "var(--color-text-primary)" }}
+                      />
+                    </td>
                     <td style={{ padding: "7px 10px", textAlign: "right" }}>
                       <input
                         type="number"
@@ -128,7 +140,19 @@ export default function CostingTab({
                         style={{ width: 80, textAlign: "right", fontSize: 13, padding: "3px 6px", borderRadius: 4 }}
                       />
                     </td>
-                    <td style={{ padding: "7px 0 7px 10px", textAlign: "right", color: "var(--color-text-secondary)" }}>{ing.unit}</td>
+                    <td style={{ padding: "7px 0 7px 10px", textAlign: "right" }}>
+                      <input
+                        type="text"
+                        value={ing.unit}
+                        onChange={e => setEditingRecipe(er => ({
+                          ...er,
+                          ingredients: er.ingredients.map((x, i) =>
+                            i === idx ? { ...x, unit: e.target.value } : x
+                          ),
+                        }))}
+                        style={{ width: 60, textAlign: "right", fontSize: 13, padding: "3px 6px", borderRadius: 4, color: "var(--color-text-secondary)" }}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>

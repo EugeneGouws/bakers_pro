@@ -11,6 +11,7 @@ import { convertToBaseUnits }                                                 fr
 import Header           from "./components/ui/Header.jsx";
 import TabBar           from "./components/ui/TabBar.jsx";
 import PriceReviewModal from "./components/ui/PriceReviewModal.jsx";
+import NewIngredientModal from "./components/ui/NewIngredientModal.jsx";
 
 import ScannerTab       from "./components/tabs/ScannerTab.jsx";
 import IngredientsDbTab from "./components/tabs/IngredientsDbTab.jsx";
@@ -64,6 +65,7 @@ export default function App() {
   });
   const [editingRecipe,    setEditingRecipe]    = useState(null);
   const [packagingCost,    setPackagingCost]    = useState(16);
+  const [newIngredientModal, setNewIngredientModal] = useState({ isOpen: false, ingredients: [] });
 
   // ── Recipe Book UI state ─────────────────────────────────────
   const [bookShowStarred,  setBookShowStarred]  = useState(false);
@@ -113,20 +115,6 @@ export default function App() {
 
     if (dbChanged) setDb(currentDb);
 
-    // Pre-select new and outdated ingredients so DB tab is ready for a price run
-    const thirtyDaysAgo = Date.now() - 30 * 86400000;
-    const toSelect = new Set(
-      currentDb
-        .filter(i =>
-          i.needsCosting ||
-          i.costPerUnit === 0 ||
-          !i.dateLastUpdated ||
-          new Date(i.dateLastUpdated).getTime() < thirtyDaysAgo
-        )
-        .map(i => i.name)
-    );
-    if (toSelect.size > 0) setSelectedIngredients(toSelect);
-
     const newRecipe = {
       id: crypto.randomUUID(),
       title: parsed.title || "Imported Recipe",
@@ -156,6 +144,34 @@ export default function App() {
 
   function onSaveRecipeEdit() {
     if (!editingRecipe) return;
+
+    // Detect new ingredients that aren't in the database
+    const newIngredientsDetected = [];
+    let dbChanged = false;
+    let currentDb = [...dbState];
+
+    for (const ing of editingRecipe.ingredients) {
+      if (FREE_INGREDIENTS.has(ing.name.toLowerCase())) continue;
+      if (!matchIngredientEff(ing.name, ing.unit, currentDb)) {
+        // Ingredient is new
+        newIngredientsDetected.push(ing);
+        // Add it to the database
+        currentDb.push({
+          name: ing.name.charAt(0).toUpperCase() + ing.name.slice(1),
+          aliases: [ing.name.toLowerCase()],
+          unit: ing.unit,
+          costPerUnit: 0,
+          pkg: "—",
+          dateLastUpdated: todayStr(),
+          needsCosting: true,
+        });
+        dbChanged = true;
+      }
+    }
+
+    if (dbChanged) setDb(currentDb);
+
+    // Save the recipe changes
     const updated = recipes.map(r =>
       r.id === editingRecipe.id
         ? { ...r, title: editingRecipe.title.trim() || r.title, ingredients: editingRecipe.ingredients }
@@ -163,6 +179,11 @@ export default function App() {
     );
     setRecipes(updated);
     setEditingRecipe(null);
+
+    // Show modal if new ingredients were detected
+    if (newIngredientsDetected.length > 0) {
+      setNewIngredientModal({ isOpen: true, ingredients: newIngredientsDetected });
+    }
   }
 
   function onDeleteRecipe(id) {
@@ -353,6 +374,15 @@ export default function App() {
         reviewQueue={apify.reviewQueue}
         onAccept={(product) => apify.acceptProduct(product, dbState, setDb)}
         onSkip={apify.skipReview}
+        isLoadingMore={apify.priceRunning}
+        loadError={apify.error}
+      />
+
+      <NewIngredientModal
+        isOpen={newIngredientModal.isOpen}
+        newIngredients={newIngredientModal.ingredients}
+        onConfirm={() => setNewIngredientModal({ isOpen: false, ingredients: [] })}
+        onCancel={() => setNewIngredientModal({ isOpen: false, ingredients: [] })}
       />
 
       {/* STORAGE CONSENT BANNER */}

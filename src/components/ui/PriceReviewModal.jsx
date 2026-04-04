@@ -21,9 +21,20 @@ function parsePackageInfo(str) {
   return { packageValue: null, packageUnit: null };
 }
 
-// Props: { reviewItem, reviewQueue, onAccept, onSkip }
-export default function PriceReviewModal({ reviewItem, reviewQueue, onAccept, onSkip }) {
-  if (!reviewItem) return null;
+function SkeletonRow() {
+  return (
+    <div style={{
+      height: 64, borderRadius: 8,
+      background: "var(--color-background-secondary)",
+      border: "1px solid var(--color-border-tertiary)",
+      animation: "pulse 1.4s ease-in-out infinite",
+    }} />
+  );
+}
+
+// Props: { reviewItem, reviewQueue, onAccept, onSkip, isLoadingMore, loadError }
+export default function PriceReviewModal({ reviewItem, reviewQueue, onAccept, onSkip, isLoadingMore, loadError }) {
+  if (!reviewItem && !isLoadingMore) return null;
 
   const remaining = reviewQueue.length;
 
@@ -37,10 +48,12 @@ export default function PriceReviewModal({ reviewItem, reviewQueue, onAccept, on
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <p style={{ margin: "0 0 2px", fontSize: 11, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: 0.5 }}>
-              Choose product{remaining > 0 ? ` · ${remaining + 1} remaining` : ""}
+              {reviewItem
+                ? `Choose product${remaining > 0 ? ` · ${remaining + 1} remaining` : ""}`
+                : "Fetching prices\u2026"}
             </p>
             <h3 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: "var(--color-text-primary)" }}>
-              {reviewItem.ingredient.name}
+              {reviewItem ? reviewItem.ingredient.name : "Searching stores"}
             </h3>
           </div>
           <button
@@ -52,74 +65,104 @@ export default function PriceReviewModal({ reviewItem, reviewQueue, onAccept, on
 
       {/* Candidate list */}
       <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
-        {reviewItem.all.map(({ product }, idx) => {
-          const titleStr = product.name || product.title || "Unknown product";
-          const priceRaw = product.price ?? product.currentPrice ?? null;
-          const price = priceRaw != null
-            ? (typeof priceRaw === "string" ? parseFloat(priceRaw.replace(/[^0-9.]/g, "")) : Number(priceRaw))
-            : null;
-          const { packageValue, packageUnit } = parsePackageInfo(titleStr);
-          return (
-            <button
-              key={idx}
-              onClick={() => onAccept(product)}
-              style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-                padding: "14px 16px", borderRadius: 8, gap: 12,
-                border: "2px solid var(--color-border-secondary)",
-                background: "var(--color-background)",
-                cursor: "pointer",
-                textAlign: "left",
-                width: "100%",
-                transition: "all 0.15s",
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = "#BA7517";
-                e.currentTarget.style.background = "#FAEEDA";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = "var(--color-border-secondary)";
-                e.currentTarget.style.background = "var(--color-background)";
-              }}
-            >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{
-                  margin: "0 0 4px", fontSize: 14, fontWeight: 500,
-                  color: "var(--color-text-primary)",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}>
-                  {titleStr}
-                </p>
-                <p style={{ margin: 0, fontSize: 12, color: "var(--color-text-secondary)" }}>
-                  {price != null ? `R${price.toFixed(2)}` : "Price unavailable"}
-                  {packageValue != null ? ` · ${packageValue}${packageUnit}` : ""}
-                </p>
-              </div>
-              <span style={{
-                padding: "6px 14px", fontSize: 12, borderRadius: 6, flexShrink: 0,
-                background: "var(--color-background-secondary)",
-                color: "var(--color-text-primary)",
-                fontWeight: 500, border: "1px solid var(--color-border-secondary)",
-                whiteSpace: "nowrap",
-              }}>Select</span>
-            </button>
-          );
-        })}
+        {reviewItem ? (
+          <>
+            {reviewItem.all.map(({ product }, idx) => {
+              const titleStr = product.name || product.title || "Unknown product";
+              const priceRaw = product.price ?? product.currentPrice ?? null;
+              const price = priceRaw != null
+                ? (typeof priceRaw === "string" ? parseFloat(priceRaw.replace(/[^0-9.]/g, "")) : Number(priceRaw))
+                : null;
+              const { packageValue, packageUnit } = parsePackageInfo(titleStr);
+              return (
+                <button
+                  key={idx}
+                  onClick={() => onAccept(product)}
+                  style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "14px 16px", borderRadius: 8, gap: 12,
+                    border: "2px solid var(--color-border-secondary)",
+                    background: "var(--color-background)",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    width: "100%",
+                    transition: "all 0.15s",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = "#BA7517";
+                    e.currentTarget.style.background = "#FAEEDA";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = "var(--color-border-secondary)";
+                    e.currentTarget.style.background = "var(--color-background)";
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      margin: "0 0 4px", fontSize: 14, fontWeight: 500,
+                      color: "var(--color-text-primary)",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    }}>
+                      {titleStr}
+                    </p>
+                    <p style={{ margin: 0, fontSize: 12, color: "var(--color-text-secondary)" }}>
+                      {price != null ? `R${price.toFixed(2)}` : "Price unavailable"}
+                      {packageValue != null ? ` · ${packageValue}${packageUnit}` : ""}
+                    </p>
+                  </div>
+                  <span style={{
+                    padding: "6px 14px", fontSize: 12, borderRadius: 6, flexShrink: 0,
+                    background: "var(--color-background-secondary)",
+                    color: "var(--color-text-primary)",
+                    fontWeight: 500, border: "1px solid var(--color-border-secondary)",
+                    whiteSpace: "nowrap",
+                  }}>Select</span>
+                </button>
+              );
+            })}
+
+            {isLoadingMore && <SkeletonRow />}
+
+            {!isLoadingMore && (
+              <p style={{ fontSize: 11, color: "var(--color-text-secondary)", textAlign: "center", margin: "4px 0 0" }}>
+                Showing all {reviewItem.all.length} result{reviewItem.all.length !== 1 ? "s" : ""}
+              </p>
+            )}
+          </>
+        ) : (
+          /* Modal is open but first result hasn't arrived yet */
+          <>
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+          </>
+        )}
       </div>
 
+      {/* Error notice */}
+      {loadError && (
+        <div style={{ padding: "0 24px 8px" }}>
+          <p style={{ fontSize: 12, color: "#A32D2D", textAlign: "center", margin: 0 }}>
+            Search ended early — some results may be missing
+          </p>
+        </div>
+      )}
+
       {/* Skip */}
-      <div style={{ padding: "0 24px 20px" }}>
-        <button
-          onClick={onSkip}
-          style={{
-            width: "100%", padding: "10px", fontSize: 13,
-            border: "1px solid var(--color-border-secondary)",
-            background: "var(--color-background)",
-            color: "var(--color-text-secondary)",
-            borderRadius: 8, cursor: "pointer",
-          }}
-        >Skip — none of these match</button>
-      </div>
+      {reviewItem && (
+        <div style={{ padding: "0 24px 20px" }}>
+          <button
+            onClick={onSkip}
+            style={{
+              width: "100%", padding: "10px", fontSize: 13,
+              border: "1px solid var(--color-border-secondary)",
+              background: "var(--color-background)",
+              color: "var(--color-text-secondary)",
+              borderRadius: 8, cursor: "pointer",
+            }}
+          >Skip — none of these match</button>
+        </div>
+      )}
     </Modal>
   );
 }
