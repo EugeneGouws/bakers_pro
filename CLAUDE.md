@@ -17,6 +17,7 @@ main.jsx                 — entry point
 components/
 tabs/
 ScannerTab.jsx
+ImportConfirmModal.jsx
 IngredientsDbTab.jsx
 CostingTab.jsx
 RecipeBookTab.jsx
@@ -73,6 +74,14 @@ github-commit.js         — kept, used in v2.1
 - **Prevention:** After writing a component with useState, scan all usages of the setter name before closing the file.
 
 ## Session Log
+
+### 2026-04-04: Focused AI ingredient-fix flow, post-import pre-selection (v2.1)
+- ✅ parseValidator: replaced validateParsedRecipe with suggestIngredientFixes (unmatched names only, ~100 chars vs 3000+)
+- ✅ parseValidator: Nano responseConstraint added to force JSON shape; system prompt rewritten as JSON API with SA glossary
+- ✅ ImportConfirmModal: per-ingredient status tags (matched/loading/ai-resolved/ai-suggested/unmatched); live update as AI resolves
+- ✅ ScannerTab: wired to ImportConfirmModal; unmatched-only AI pattern; functional state guard for closed-modal safety
+- ✅ App.jsx: price update clears selection on completion; finishImport pre-selects new+outdated ingredients in DB tab
+- ✅ Session was clean — no bugs introduced
 
 ### 2026-04-04: Background validation, Gemini Nano, consent screens (v2.1 partial)
 - ✅ ScannerTab: non-blocking import — onImportComplete fires immediately, AI validates in background

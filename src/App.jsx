@@ -113,6 +113,20 @@ export default function App() {
 
     if (dbChanged) setDb(currentDb);
 
+    // Pre-select new and outdated ingredients so DB tab is ready for a price run
+    const thirtyDaysAgo = Date.now() - 30 * 86400000;
+    const toSelect = new Set(
+      currentDb
+        .filter(i =>
+          i.needsCosting ||
+          i.costPerUnit === 0 ||
+          !i.dateLastUpdated ||
+          new Date(i.dateLastUpdated).getTime() < thirtyDaysAgo
+        )
+        .map(i => i.name)
+    );
+    if (toSelect.size > 0) setSelectedIngredients(toSelect);
+
     const newRecipe = {
       id: crypto.randomUUID(),
       title: parsed.title || "Imported Recipe",
@@ -283,7 +297,10 @@ export default function App() {
           commitPackageEdit={commitPackageEdit}
           priceRunning={apify.priceRunning}
           priceProgress={apify.priceProgress}
-          onRunPriceUpdate={() => apify.runPriceUpdate(selectedIngredients, dbState, setDb)}
+          onRunPriceUpdate={async () => {
+            await apify.runPriceUpdate(selectedIngredients, dbState, setDb);
+            setSelectedIngredients(new Set());
+          }}
           needsCostingCount={needsCostingCount}
           onDeleteIngredient={onDeleteIngredient}
         />

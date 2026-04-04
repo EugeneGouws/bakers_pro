@@ -9,7 +9,8 @@ A recipe costing tool for South African bakers. Community data is shared via Git
 - **Costing** — per-ingredient breakdown with 15% overhead (5% operations + 5% equipment + 5% supplies) + packaging cost (default R16, editable); sell-price multipliers 2×, 2.5×, 3× (user-editable)
 - **Recipe Book** — numbered list of all recipes with live cost price; ★ favourites; filter to starred recipes only; named collections; inline edit of title and quantities
 - **Ingredient deletion** — click ✕ to remove erroneous ingredients from the database (with confirmation)
-- **On-device AI validation** — after import, Gemini Nano (Chrome) or Ollama (dev) checks ingredient names, quantities, and units in the background; a correction toast lets you review and accept changes. Requires a one-time 1.7 GB download on Chrome; user-consented.
+- **On-device AI validation** — after import, a review modal shows each ingredient's match status live. Gemini Nano (Chrome) or Ollama (dev) checks unmatched names in the background; per-row status tags (matched / AI-resolved / needs confirmation / unmatched). Requires a one-time 1.7 GB download on Chrome; user-consented.
+- **Ingredient pre-selection on import** — after a recipe is loaded, all new and outdated ingredients are pre-selected in the DB tab for an immediate price update run. Selection clears automatically after a price update completes.
 
 ## Stack
 

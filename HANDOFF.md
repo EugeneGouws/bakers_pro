@@ -4,24 +4,24 @@
 
 ## What was accomplished this session
 
-- ✅ Non-blocking import flow — `onImportComplete` fires immediately; AI validation runs in the background via `.then()`
-- ✅ Correction toast — fixed-bottom, auto-dismisses after 30s; Review opens inline diff panel with per-correction table; Accept all overwrites the saved recipe
-- ✅ `detectAiBackend()` updated — accepts `'available'` and `'downloadable'` as aliases; returns `'chrome-needs-download'` when model needs downloading
-- ✅ `triggerModelDownload()` exported — fires a silent Gemini Nano session create/destroy to trigger the browser download
-- ✅ Chrome session — `expectedInputLanguages`/`expectedOutputLanguages` added to suppress browser warnings
-- ✅ `validateParsedRecipe()` — optional 5th `backendOverride` param; treats `'chrome-needs-download'` as `'chrome'`
-- ✅ Ollama timeout reduced 120s → 15s; `gemma3n:e2b` and `gemma3n:e4b` added to model picker
-- ✅ AI download consent panel in ScannerTab — explains 1.7 GB download, two buttons, decision persisted to `bakerspro_consent_ai`
-- ✅ Storage consent banner in App.jsx — fixed bottom, standard privacy notice, persisted to `bakerspro_consent_storage`
-- ✅ Fixed `correctionToast`/`toast` naming crash bug in ScannerTab
+- ✅ `suggestIngredientFixes` — replaces `validateParsedRecipe`; sends only unmatched ingredient names to AI (~100 chars vs 3000+); splits results into `resolved` (silent) and `needsConfirm` (user choice)
+- ✅ `ImportConfirmModal` — new component; opens immediately on file parse; per-ingredient status column (matched/loading/ai-resolved/ai-suggested/unmatched); pulsing amber dot while AI runs; live row updates when AI resolves; Yes/No inline for ai-suggested; Accept merges all; Use as parsed ignores AI
+- ✅ `ScannerTab` — wired to `ImportConfirmModal`; tags ingredients via `matchIngredientEff` before opening modal; fires `suggestIngredientFixes` in background; functional state guard handles modal-closed-before-AI-returns safely
+- ✅ Nano `responseConstraint` — passes JSON schema to `session.prompt()` to hard-constrain output shape; equivalent to Ollama's `format` parameter
+- ✅ System prompt — rewritten as explicit JSON API with SA/Afrikaans baking glossary embedded (koekmeel, koeksoda, konfyt, amasi, stork bake, rama)
+- ✅ Post-import pre-selection — `finishImport` selects all `needsCosting` / `costPerUnit === 0` / outdated (>30 days) ingredients so DB tab is ready for an immediate price run
+- ✅ Price update deselect — `onRunPriceUpdate` awaits completion then clears `selectedIngredients`
+- ✅ AI integration skill doc saved to `~/.claude/skills/ai-integration/SKILL.md`
 
 ## Current state
 
 | Layer | Status | Notes |
 |---|---|---|
 | File import | ✅ stable | .txt .md .docx .pdf .xlsx |
-| AI validation | ✅ stable | Gemini Nano (Chrome) + Ollama (dev); background, non-blocking |
-| Correction toast | ✅ stable | Review/Dismiss, Accept all, 30s auto-dismiss |
+| AI validation | ✅ stable | Focused unmatched-only flow; Nano responseConstraint; SA glossary |
+| ImportConfirmModal | ✅ stable | Live status tags, pulsing dot, Yes/No confirm, Use as parsed |
+| Post-import pre-selection | ✅ stable | New + outdated ingredients selected on recipe save |
+| Price update | ✅ stable | Clears selection on completion |
 | Consent screens | ✅ stable | Storage consent banner + AI download prompt |
 | Ingredients DB | ✅ stable | Inline editing, bulk Apify/Checkers update, delete |
 | Costing tab | ✅ stable | Ingredient breakdown, overhead, editable packaging/multipliers |
@@ -64,3 +64,4 @@
 - **Prices compute at render:** never stored in recipe objects; always via `matchIngredientEff()`
 - **No logic in tabs:** all business logic lives in `lib/` or `hooks/`
 - **localStorage keys:** `bakerspro_db` · `bakerspro_recipes` · `bakerspro_favourites` · `bakerspro_collections` · `bakerspro_preferences` · `bakerspro_consent_storage` · `bakerspro_consent_ai`
+- **AI skill doc:** `~/.claude/skills/ai-integration/SKILL.md` — covers both backends, prompt engineering, unmatched-only pattern, timeout values, testing checklist
