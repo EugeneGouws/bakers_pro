@@ -1,189 +1,231 @@
-// Two backends, one interface.
-// Production: Chrome Built-in AI (Gemini Nano) — window.LanguageModel or window.ai.languageModel
-// Dev:        Ollama running on localhost:11434
-// If neither available: returns original parsed recipe, corrected: false
+import { matchIngredientEff } from './ingredients.js';
 
-const SYSTEM_PROMPT = `You are a recipe validation assistant for a South African baking cost app.
-You receive the original raw recipe text, a machine-parsed version, and a list of known ingredient names.
+const OLLAMA_URL = 'http://localhost:11434/api/chat';
 
-Check the parsed recipe against the raw text and:
-1. Fix the title if wrong or missing
-2. Fix servings/yield if wrong or missing
-3. Add ingredients that appear in the raw text but are missing from the parsed list
-4. Fix ingredient names that are garbled or truncated
-5. Fix quantities and units that are obviously wrong (e.g. "2 butter" → "250g butter")
-6. Normalise ingredient names to match the known list where a clear match exists
-7. Do NOT invent ingredients that are not in the raw text
+const SUGGEST_SYSTEM = `You are a JSON API. You only output raw JSON, never text, never markdown, never explanations.
+Given a list of ingredient names, return what each one most likely means.
+Output format: {"suggestions":[{"from":string,"to":string}]}
+Omit entries you are not confident about.
+South African terms: koekmeel=cake flour, koeksoda=bicarbonate of soda, konfyt=jam, amasi=buttermilk, stork bake=margarine, rama=margarine`;
 
-Respond only with a JSON object matching this schema exactly:
-{
-  "title": string,
-  "servings": number,
-  "ingredients": [{ "name": string, "quantity": number, "unit": string }],
-  "corrections": [string]
-}
-The corrections array lists every change made in plain English. If nothing was changed, return an empty array.`;
-
-const OLLAMA_SCHEMA = {
-  type: "object",
+const SUGGEST_SCHEMA = {
+  type: 'object',
   properties: {
-    title: { type: "string" },
-    servings: { type: "number" },
-    ingredients: {
-      type: "array",
+    suggestions: {
+      type: 'array',
       items: {
-        type: "object",
+        type: 'object',
         properties: {
-          name: { type: "string" },
-          quantity: { type: "number" },
-          unit: { type: "string" },
+          from: { type: 'string' },
+          to:   { type: 'string' },
         },
-        required: ["name", "quantity", "unit"],
+        required: ['from', 'to'],
       },
     },
-    corrections: {
-      type: "array",
-      items: { type: "string" },
-    },
   },
-  required: ["title", "servings", "ingredients", "corrections"],
+  required: ['suggestions'],
 };
 
 /**
- * @returns {Promise<'chrome'|'ollama'|'none'>}
+ * Detects which AI backend is available.
+ * @returns {Promise<'chrome'|'chrome-needs-download'|'ollama'|'none'>}
  */
 export async function detectAiBackend() {
-  if (import.meta.env.DEV) {
+  if (typeof window !== 'undefined' && window.LanguageModel) {
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 2000);
-      await fetch("http://localhost:11434", { signal: controller.signal });
-      clearTimeout(timeout);
-      return "ollama";
-    } catch {
-      // fall through
+      const available = await window.LanguageModel.availability();
+      console.log('[AI] Chrome LanguageModel availability:', available);
+      if (available === 'readily' || available === 'available') return 'chrome';
+      if (available === 'after-download' || available === 'downloadable') return 'chrome-needs-download';
+    } catch (e) {
+      console.warn('[AI] Chrome availability check failed:', e.message);
     }
   }
 
   try {
-    const api = window.LanguageModel ?? window.ai?.languageModel ?? null;
-    if (api) {
-      const result = await (api.availability?.() ?? api.capabilities?.());
-      const status = typeof result === "string" ? result : result?.available;
-      if (status === "readily" || status === "after-download") {
-        return "chrome";
-      }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const response = await fetch('http://localhost:11434/api/tags', { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (response.ok) {
+      console.log('[AI] Ollama reachable at localhost:11434');
+      return 'ollama';
     }
+  } catch (e) {
+    // not available
+  }
+
+  console.log('[AI] No backend detected — returning none');
+  return 'none';
+}
+
+/**
+ * Fetch list of installed Ollama model names.
+ * @returns {Promise<string[]>}
+ */
+export async function fetchOllamaModels() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const resp = await fetch('http://localhost:11434/api/tags', { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    return (data.models || []).map(m => m.name);
   } catch {
-    // fall through
+    return [];
+  }
+}
+
+/**
+ * Triggers a silent Gemini Nano model download.
+ * @returns {Promise<boolean>}
+ */
+export async function triggerModelDownload() {
+  if (typeof window === 'undefined' || !window.LanguageModel) return false;
+  try {
+    const session = await window.LanguageModel.create({ systemPrompt: '' });
+    session.destroy();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Takes only unmatched ingredient name strings.
+ * Asks the AI what each one likely means, then re-runs matchIngredientEff
+ * on each suggestion to split into silently-resolved vs needs-confirmation.
+ *
+ * @param {string[]} unmatchedNames
+ * @param {object[]} dbIngredients
+ * @param {string}   backend         — 'chrome' | 'ollama' | 'none'
+ * @param {string}   model           — Ollama model name
+ * @param {number}   timeoutMs
+ * @returns {Promise<{ resolved, needsConfirm, corrections }>}
+ */
+export async function suggestIngredientFixes(
+  unmatchedNames,
+  dbIngredients,
+  backend,
+  model = 'qwen2.5:3b',
+  timeoutMs = 20000,
+) {
+  if (!unmatchedNames.length) return { resolved: [], needsConfirm: [], corrections: [] };
+
+  const resolvedBackend = backend === 'chrome-needs-download' ? 'chrome' : backend;
+  if (resolvedBackend === 'none') return { resolved: [], needsConfirm: [], corrections: [] };
+
+  const userMessage = `Ingredient names to clean: ${unmatchedNames.join(', ')}`;
+
+  console.log('[AI] Sending unmatched names:', unmatchedNames);
+  console.log('[AI] Prompt chars:', SUGGEST_SYSTEM.length + userMessage.length);
+
+  let raw;
+  if (resolvedBackend === 'chrome') {
+    raw = await _runChrome(SUGGEST_SYSTEM, userMessage, timeoutMs);
+  } else {
+    raw = await _runOllama(SUGGEST_SYSTEM, userMessage, model, timeoutMs, SUGGEST_SCHEMA);
   }
 
-  return "none";
-}
+  console.log('[AI] suggestIngredientFixes raw:', raw);
+  const json = parseModelResponse(raw);
+  if (!json?.suggestions) throw new Error('Invalid response from AI — expected {"suggestions":[...]}');
 
-/**
- * Internal: map parsed ingredients (which use `amount`) to `quantity` for the AI prompt.
- */
-function toPromptShape(parsed) {
-  return {
-    ...parsed,
-    ingredients: parsed.ingredients.map(({ name, amount, unit, ...rest }) => ({
-      name,
-      quantity: amount ?? rest.quantity ?? 0,
-      unit,
-    })),
-  };
-}
+  const resolved    = [];
+  const needsConfirm = [];
+  const corrections  = [];
 
-/**
- * Internal: map AI response (which uses `quantity`) back to `amount` for finishImport.
- */
-function fromResponseShape(data) {
-  return {
-    ...data,
-    ingredients: (data.ingredients || []).map(({ name, quantity, unit }) => ({
-      name,
-      amount: quantity ?? 0,
-      unit,
-    })),
-  };
-}
-
-/**
- * @param {string} rawText
- * @param {object} parsed        — { title, servings, ingredients: [{name, amount, unit}] }
- * @param {Array}  dbIngredients — current dbState, used for name normalisation hints
- * @returns {Promise<{ result: object, corrected: boolean, corrections: string[], error: string|null }>}
- */
-export async function validateParsedRecipe(rawText, parsed, dbIngredients) {
-  const backend = await detectAiBackend();
-  const promptParsed = toPromptShape(parsed);
-
-  const userMessage =
-    `RAW TEXT:\n${rawText}\n\nPARSED RECIPE:\n${JSON.stringify(promptParsed, null, 2)}` +
-    `\n\nKNOWN INGREDIENT NAMES:\n${dbIngredients.map((i) => i.name).join(", ")}`;
-
-  if (backend === "chrome") {
-    try {
-      const api = window.LanguageModel ?? window.ai?.languageModel;
-      const session = await api.create({ systemPrompt: SYSTEM_PROMPT });
-      const response = await session.prompt(userMessage);
-      session.destroy();
-      let data;
-      try {
-        data = JSON.parse(response);
-      } catch {
-        return { result: parsed, corrected: false, corrections: [], error: "Model returned invalid JSON" };
-      }
-      const corrections = data.corrections || [];
-      return {
-        result: fromResponseShape(data),
-        corrected: corrections.length > 0,
-        corrections,
-        error: null,
-      };
-    } catch (e) {
-      return { result: parsed, corrected: false, corrections: [], error: e.message };
+  for (const { from, to } of json.suggestions) {
+    if (!from || !to) continue;
+    const dbEntry = matchIngredientEff(to, null, dbIngredients);
+    if (dbEntry) {
+      resolved.push({ original: from, suggested: to, dbEntry });
+      corrections.push(`"${from}" → "${to}"`);
+    } else {
+      needsConfirm.push({ original: from, suggested: to });
+      corrections.push(`"${from}" → "${to}" (needs confirmation)`);
     }
   }
 
-  if (backend === "ollama") {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000);
-      const resp = await fetch("http://localhost:11434/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: "qwen2.5:1.5b",
-          stream: false,
-          format: OLLAMA_SCHEMA,
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: userMessage },
-          ],
-        }),
-      });
-      clearTimeout(timeout);
-      const json = await resp.json();
-      let data;
-      try {
-        data = JSON.parse(json.message.content);
-      } catch {
-        return { result: parsed, corrected: false, corrections: [], error: "Model returned invalid JSON" };
-      }
-      const corrections = data.corrections || [];
-      return {
-        result: fromResponseShape(data),
-        corrected: corrections.length > 0,
-        corrections,
-        error: null,
-      };
-    } catch (e) {
-      return { result: parsed, corrected: false, corrections: [], error: e.message };
-    }
-  }
+  console.log('[AI] resolved:', resolved.length, '| needsConfirm:', needsConfirm.length);
+  return { resolved, needsConfirm, corrections };
+}
 
-  return { result: parsed, corrected: false, corrections: [], error: null };
+// ── Internal inference helpers ───────────────────────────────────────────────
+
+async function _runChrome(systemPrompt, userMessage, timeoutMs) {
+  const session = await window.LanguageModel.create({
+    systemPrompt,
+    expectedInputLanguages: ['en'],
+    expectedOutputLanguages: ['en'],
+  });
+  try {
+    console.log('[Nano] Session created — sending prompt');
+    const raw = await Promise.race([
+      session.prompt(userMessage, { responseConstraint: SUGGEST_SCHEMA }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs)),
+    ]);
+    console.log('[Nano] Raw response:', raw);
+    return raw;
+  } finally {
+    session.destroy();
+  }
+}
+
+async function _runOllama(systemPrompt, userMessage, model, timeoutMs, jsonSchema) {
+  const controller = new AbortController();
+  const timeoutId  = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    console.log('[Ollama] Sending to model:', model);
+    const response = await fetch(OLLAMA_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model,
+        stream: false,
+        format: jsonSchema,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user',   content: userMessage },
+        ],
+      }),
+    });
+    clearTimeout(timeoutId);
+    if (!response.ok) throw new Error(`Ollama HTTP ${response.status}`);
+    const data    = await response.json();
+    const content = data.message?.content;
+    console.log('[Ollama] Raw response content:', content);
+    return content;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
+function parseModelResponse(raw) {
+  if (!raw) return null;
+  try {
+    const clean = raw.replace(/^```[\w]*\n?|```$/gm, '').trim();
+    return JSON.parse(clean);
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Checks whether Ollama is reachable on localhost.
+ * @returns {Promise<boolean>}
+ */
+export async function isOllamaAvailable() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const response = await fetch('http://localhost:11434/api/tags', { signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (e) {
+    return false;
+  }
 }

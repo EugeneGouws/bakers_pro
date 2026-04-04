@@ -1,63 +1,66 @@
 # HANDOFF.md
 
-**Last updated:** 2026-04-02 · branch: `v2.0` · **Status: v2.0 COMPLETE**
+**Last updated:** 2026-04-04 · branch: `v2.1` · **Status: v2.1 in progress**
 
-## v2.0 Accomplishments (across 3+ sessions)
+## What was accomplished this session
 
-**Phase 1-3: Modular refactor (prior sessions)**
-- Extracted libs (ingredients.js, storage.js, recipeImport.js, apify.js, productSelection.js) and UI components (Header, TabBar, Badge, Button, Modal)
-- Built custom hooks (useDb, useRecipes, useApify) with auto-persistence
-- Created all 5 tab components (ScannerTab, IngredientsDbTab, CostingTab, RecipeBookTab, LivePricesTab)
-
-**This session — UI refinement, critical fixes, final features**
-- ✅ Renamed "Scanner" → "Upload" tab
-- ✅ Redesigned PriceReviewModal: white candidate boxes, amber hover states
-- ✅ Fixed CRITICAL CSS bug: index.css never imported (all CSS variables were undefined). Added import to main.jsx, defined missing --color-background variables
-- ✅ Fixed Button.jsx undefined CSS variables, duplicate props in RecipeBookTab
-- ✅ Stripped URL import from ScannerTab (file drop only)
-- ✅ CostingTab: packaging now separate editable row (R16 default), sell multipliers editable (2, 2.5, 3), per-serving block with servings input
-- ✅ Added delete option to Ingredients DB table (with confirmation)
-- ✅ Synced seed ingredients to correct prices (2026-04-02)
+- ✅ Non-blocking import flow — `onImportComplete` fires immediately; AI validation runs in the background via `.then()`
+- ✅ Correction toast — fixed-bottom, auto-dismisses after 30s; Review opens inline diff panel with per-correction table; Accept all overwrites the saved recipe
+- ✅ `detectAiBackend()` updated — accepts `'available'` and `'downloadable'` as aliases; returns `'chrome-needs-download'` when model needs downloading
+- ✅ `triggerModelDownload()` exported — fires a silent Gemini Nano session create/destroy to trigger the browser download
+- ✅ Chrome session — `expectedInputLanguages`/`expectedOutputLanguages` added to suppress browser warnings
+- ✅ `validateParsedRecipe()` — optional 5th `backendOverride` param; treats `'chrome-needs-download'` as `'chrome'`
+- ✅ Ollama timeout reduced 120s → 15s; `gemma3n:e2b` and `gemma3n:e4b` added to model picker
+- ✅ AI download consent panel in ScannerTab — explains 1.7 GB download, two buttons, decision persisted to `bakerspro_consent_ai`
+- ✅ Storage consent banner in App.jsx — fixed bottom, standard privacy notice, persisted to `bakerspro_consent_storage`
+- ✅ Fixed `correctionToast`/`toast` naming crash bug in ScannerTab
 
 ## Current state
 
 | Layer | Status | Notes |
 |---|---|---|
 | File import | ✅ stable | .txt .md .docx .pdf .xlsx |
-| Ingredients DB | ✅ stable | inline price/product-name editing, bulk Apify/Checkers update |
-| Costing tab | ✅ stable | ingredient breakdown, 15% overhead, editable packaging, editable multipliers, per-serving view |
-| Recipe Book | ✅ stable | list with live costs, ★ favourites, starred filter, named collections |
-| Price review modal | ✅ stable | white candidate boxes, amber hover highlight |
-| Tests | ❌ not started | no test framework configured |
+| AI validation | ✅ stable | Gemini Nano (Chrome) + Ollama (dev); background, non-blocking |
+| Correction toast | ✅ stable | Review/Dismiss, Accept all, 30s auto-dismiss |
+| Consent screens | ✅ stable | Storage consent banner + AI download prompt |
+| Ingredients DB | ✅ stable | Inline editing, bulk Apify/Checkers update, delete |
+| Costing tab | ✅ stable | Ingredient breakdown, overhead, editable packaging/multipliers |
+| Recipe Book | ✅ stable | List with live costs, ★ favourites, named collections |
+| Price review modal | ✅ stable | White candidate boxes, amber hover |
+| Tests | ❌ not started | No test framework configured |
 
 ## Known bugs
 
 1. **#6: Unit mismatch in costing** (Deferred)
    - When recipe unit (g/ml) doesn't match DB unit (each), fallback matching produces garbage costs
-   - Example: recipe "80g chocolate" matches DB "chocolate bar (1 each @ R52)" → shows R52/g = R52,000 total
+   - Example: recipe "80g chocolate" matches DB "chocolate bar (1 each @ R52)" → shows R52/g
    - Status: User approved deferral; to be fixed server-side before production deploy
-   - Local npm run dev shows correct prices on seed data
 
-## Backlog
+## v2.1 Backlog (Priority Order)
 
-**v2.1 enhancements & polish:**
-- **Bug #6: Unit mismatch detection** — flag mismatches with badge instead of computing wrong cost (deferred to server-side)
-- **Recipe Book: search/filter** — filter list by title, quick find by ingredient
-- **Recipe Book: duplicate detection** — warn on import if same title already exists
-- **Live Prices tab** — placeholder only; design decision pending
-- **Frontend design refactor** — extract color tokens to CSS variables, normalize inline styles, complete dark mode support
+**Ready to implement:**
+1. **Recipe Book: search/filter** — filter list by title, quick find by ingredient
+2. **Recipe Book: duplicate detection** — warn on import if same title already exists
+3. **Frontend design refactor** — extract colour tokens to CSS variables, normalise inline styles, complete dark mode
 
-**v2.1 community features (future):**
-- **GitHub sync** — re-enable shareOnImport toggle, community recipes/prices
-- **Contributor identity** — display name in preferences (currently hardcoded "anonymous")
-- **Price history** — track price changes over time per ingredient
+**Deferred (pending feedback):**
+- **Bug #6: Unit mismatch detection** — awaiting beta testing; fix will be server-side
 
-## Architecture reminder v2.0
+**Future (v2.2+):**
+- **GitHub sync** — re-enable shareOnImport, community recipes/prices
+- **Contributor identity** — display name in preferences
+- **Price history** — track changes over time per ingredient
 
-- **Modular**: src/ split into components/, hooks/, lib/, data/
-- **State management**: Custom hooks (useDb, useRecipes, useApify) with localStorage auto-persist
-- **No logic in tabs**: Tabs are display-only; all logic in lib/ or hooks/
-- **Prices compute at render**: Never stored in recipe objects; always via matchIngredientEff()
-- **Overhead formula**: Total = Ingredients + Supplies(5%) + Operating(5%) + Equipment(5%) + Packaging
-- **Keep fetch-only**: No browser-specific APIs for future React Native port
-- **v1.0 frozen**: BakersCostPro.jsx serves as reference only; never modify
+## Next session plan
+
+1. **[TOP PRIORITY] Recipe Book search/filter** — add a search input above the recipe list; filter by title as user types
+2. **Duplicate detection on import** — check existing recipe titles before calling `finishImport`; show a confirmation if match found
+3. **Frontend design overhaul** — normalise inline styles across all tabs, flesh out dark mode
+
+## Architecture reminder
+
+- **Dependency direction:** tabs → lib/hooks → storage. Never the reverse.
+- **Stable files (avoid touching):** `BakersCostPro.jsx` (v1.0 reference), `src/lib/storage.js`, `src/data/defaultIngredients.js`
+- **Prices compute at render:** never stored in recipe objects; always via `matchIngredientEff()`
+- **No logic in tabs:** all business logic lives in `lib/` or `hooks/`
+- **localStorage keys:** `bakerspro_db` · `bakerspro_recipes` · `bakerspro_favourites` · `bakerspro_collections` · `bakerspro_preferences` · `bakerspro_consent_storage` · `bakerspro_consent_ai`

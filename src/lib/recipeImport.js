@@ -123,22 +123,23 @@ export async function importFromFile(file) {
   const ext = file.name.split('.').pop().toLowerCase();
 
   if (ext === 'txt' || ext === 'md') {
-    return parseRecipeText(await file.text());
+    const rawText = await file.text();
+    return { ...parseRecipeText(rawText), rawText };
   }
 
   if (ext === 'docx') {
     const mammoth = await import('mammoth');
     const ab = await file.arrayBuffer();
-    const { value: text } = await mammoth.extractRawText({ arrayBuffer: ab });
-    return parseRecipeText(text);
+    const { value: rawText } = await mammoth.extractRawText({ arrayBuffer: ab });
+    return { ...parseRecipeText(rawText), rawText };
   }
 
   if (ext === 'pdf') {
     const { extractText } = await import('unpdf');
     const ab = await file.arrayBuffer();
     const result = await extractText(new Uint8Array(ab), { mergePages: true });
-    const text = typeof result === 'string' ? result : (result.text ?? result.pages?.join('\n') ?? '');
-    return parseRecipeText(text);
+    const rawText = typeof result === 'string' ? result : (result.text ?? result.pages?.join('\n') ?? '');
+    return { ...parseRecipeText(rawText), rawText };
   }
 
   if (ext === 'xlsx') {
@@ -148,6 +149,7 @@ export async function importFromFile(file) {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
     const title = rows[0]?.[0]?.toString().trim() || file.name.replace(/\.xlsx$/i, '');
+    const rawText = rows.map(r => r.filter(Boolean).map(c => c.toString()).join('\t')).join('\n');
     const XLSX_SKIP = new Set(['Ingredients','Supplies','Opperating Costs','Equipment','Total Cost','Selling Price']);
     const ingredients = rows.slice(1)
       .filter(r => r[0] && !XLSX_SKIP.has(r[0].toString().trim()) && r[1] != null && r[1] !== '')
@@ -160,7 +162,7 @@ export async function importFromFile(file) {
         return { name, amount: Number(r[1]) || 0, unit };
       })
       .filter(i => i.name.length > 1 && !FREE_INGREDIENTS.has(i.name));
-    return { title, servings: 1, ingredients };
+    return { title, servings: 1, ingredients, rawText };
   }
 
   throw new Error(`Unsupported file type ".${ext}". Use .txt, .md, .docx, .pdf, or .xlsx`);

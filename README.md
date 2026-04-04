@@ -9,6 +9,7 @@ A recipe costing tool for South African bakers. Community data is shared via Git
 - **Costing** — per-ingredient breakdown with 15% overhead (5% operations + 5% equipment + 5% supplies) + packaging cost (default R16, editable); sell-price multipliers 2×, 2.5×, 3× (user-editable)
 - **Recipe Book** — numbered list of all recipes with live cost price; ★ favourites; filter to starred recipes only; named collections; inline edit of title and quantities
 - **Ingredient deletion** — click ✕ to remove erroneous ingredients from the database (with confirmation)
+- **On-device AI validation** — after import, Gemini Nano (Chrome) or Ollama (dev) checks ingredient names, quantities, and units in the background; a correction toast lets you review and accept changes. Requires a one-time 1.7 GB download on Chrome; user-consented.
 
 ## Stack
 
@@ -54,6 +55,8 @@ Set these in **Netlify → Site settings → Environment variables**:
 | Personal | localStorage `bakerspro_recipes` | Private (non-shared) recipes |
 | Personal | localStorage `bakerspro_favourites` | Starred recipe IDs |
 | Personal | localStorage `bakerspro_collections` | Named recipe sets |
+| Personal | localStorage `bakerspro_consent_storage` | Storage consent acknowledgement |
+| Personal | localStorage `bakerspro_consent_ai` | AI download consent (accepted/declined) |
 
 ## First load
 
@@ -69,9 +72,11 @@ On first open the app seeds from `src/data/recipes.json`. To reset personal data
 - Recipe collection with favorites and named groupings
 
 **v2.1** (in progress)
+- ✅ On-device AI validation (Gemini Nano / Ollama) — background correction toast
+- ✅ Consent screens — storage notice and AI download prompt
 - Recipe Book search/filter by title
 - Duplicate recipe detection on import
-- Full frontend design overhaul (Tailwind CSS)
+- Full frontend design overhaul
 
 **v2.2+** (planned)
 - Community sync — shared ingredient prices and recipes via GitHub

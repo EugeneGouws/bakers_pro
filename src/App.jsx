@@ -18,10 +18,21 @@ import CostingTab       from "./components/tabs/CostingTab.jsx";
 import RecipeBookTab    from "./components/tabs/RecipeBookTab.jsx";
 import LivePricesTab    from "./components/tabs/LivePricesTab.jsx";
 
+const STORAGE_CONSENT_KEY = 'bakerspro_consent_storage';
+
 export default function App() {
 
   // ── Navigation ───────────────────────────────────────────────
   const [tab, setTab] = useState("scan");
+
+  // ── Storage consent ──────────────────────────────────────────
+  const [storageConsent, setStorageConsent] = useState(() =>
+    localStorage.getItem(STORAGE_CONSENT_KEY) === '1'
+  );
+  function acceptStorageConsent() {
+    localStorage.setItem(STORAGE_CONSENT_KEY, '1');
+    setStorageConsent(true);
+  }
 
   // ── Persisted state ──────────────────────────────────────────
   const [dbState, setDb]       = useDb();
@@ -326,6 +337,35 @@ export default function App() {
         onAccept={(product) => apify.acceptProduct(product, dbState, setDb)}
         onSkip={apify.skipReview}
       />
+
+      {/* STORAGE CONSENT BANNER */}
+      {!storageConsent && (
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0,
+          background: "var(--color-background-secondary)",
+          borderTop: "1px solid var(--color-border-tertiary)",
+          padding: "14px 20px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: 16, flexWrap: "wrap",
+          fontSize: 13, color: "var(--color-text-secondary)",
+          zIndex: 200,
+        }}>
+          <span style={{ flex: 1, minWidth: 220, lineHeight: 1.5 }}>
+            This app uses your browser&rsquo;s local storage to save recipes and ingredient prices on
+            your device. No personal data is collected or transmitted to any server.
+          </span>
+          <button
+            onClick={acceptStorageConsent}
+            style={{
+              background: "var(--color-text-primary)", color: "var(--color-background-primary)",
+              border: "none", borderRadius: 6, padding: "7px 18px",
+              fontSize: 13, fontWeight: 600, cursor: "pointer", flexShrink: 0,
+            }}
+          >
+            Accept
+          </button>
+        </div>
+      )}
 
     </div>
   );

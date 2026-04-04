@@ -51,7 +51,7 @@ github-commit.js         — kept, used in v2.1
 * No logic in tabs — tabs are display only; all logic lives in lib/ or hooks/
 * No browser-specific APIs — keep fetch-only for future RN port
 * UI components in components/ui/ must have zero business logic
-* All localStorage keys: bakerspro\_db | bakerspro\_recipes | bakerspro\_favourites | bakerspro\_collections | bakerspro\_preferences
+* All localStorage keys: bakerspro\_db | bakerspro\_recipes | bakerspro\_favourites | bakerspro\_collections | bakerspro\_preferences | bakerspro\_consent\_storage | bakerspro\_consent\_ai
 * Never store computed prices in recipe objects — always compute at render via getIngredientWithCost
 * No changing BakersCostPro.jsx. it serves as a reference for creating the new files and will persist as V1.0
 * **CSS variables MUST be defined in `src/index.css` AND `src/index.css` MUST be imported in `src/main.jsx`.** Every `var(--color-*)` used in a component must have a corresponding `:root` definition in index.css. If you add a new CSS variable, verify it exists in both light and dark mode blocks. Never assume a CSS variable exists — grep for it first.
@@ -65,7 +65,24 @@ github-commit.js         — kept, used in v2.1
 - **Status:** ✅ Fixed. Modal and all UI now renders with correct colors and opacity.
 - **Prevention:** Always verify that global CSS files are imported at the entry point. When debugging "transparent" or "invisible" UI, check that CSS custom properties actually resolve — inspect computed styles in DevTools or grep for the variable definition.
 
+## Mistakes Log (continued)
+
+### 2026-04-04: ScannerTab state name mismatch — toast/correctionToast crash
+- **Root cause:** State was declared as `correctionToast`/`setCorrectionToast` but all consuming code (`showCorrectionToast`, `handleAcceptAll`, `handleDismiss`, JSX) referenced the undeclared `toast`/`setToast`. Would crash at runtime on first correction result.
+- **Fix:** Renamed state to `toast`/`setToast` to match all usage sites.
+- **Prevention:** After writing a component with useState, scan all usages of the setter name before closing the file.
+
 ## Session Log
+
+### 2026-04-04: Background validation, Gemini Nano, consent screens (v2.1 partial)
+- ✅ ScannerTab: non-blocking import — onImportComplete fires immediately, AI validates in background
+- ✅ Correction toast: fixed-bottom, auto-dismisses 30s, Review opens inline diff panel, Accept all overwrites saved recipe
+- ✅ parseValidator: detectAiBackend() supports 'available'/'downloadable' aliases; returns 'chrome-needs-download' for pending download
+- ✅ triggerModelDownload() exported — fires silent Gemini Nano download after user consent
+- ✅ Chrome session: expectedInputLanguages/expectedOutputLanguages added to suppress warnings
+- ✅ Ollama timeout: 120s → 15s; gemma3n:e2b + gemma3n:e4b added to model picker
+- ✅ AI download consent panel in ScannerTab: explains 1.7 GB download, persists decision to localStorage
+- ✅ Storage consent banner in App.jsx: fixed bottom, standard privacy notice, persists to localStorage
 
 ### 2026-04-02: UI redesign, costing features, delete option (v2.0 complete)
 - ✅ Renamed "Scanner" → "Upload" tab across TabBar and empty states
